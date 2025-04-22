@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App.tsx";
 import Register from "./pages/register/page.tsx";
 import Reset from "./pages/reset-password/page.tsx";
+import Chat from "./pages/chat/page.tsx";
 
 createRoot(document.getElementById("root")!).render(
 	<BrowserRouter>
@@ -12,6 +13,7 @@ createRoot(document.getElementById("root")!).render(
 			<Route path="/login" element={<App />} />
 			<Route path="/register" element={<Register />} />
 			<Route path="/reset" element={<Reset />} />
+			<Route path="/chat" element={<Chat />} />
 		</Routes>
 	</BrowserRouter>
 );
