@@ -6,7 +6,7 @@ client = AsyncMongoClient("mongodb://localhost:27017")
 db = client["CodeLM"]
 # each notebook is a collection that holds the user's input and the model's output
 
-async def create_notebook(notebook_id: str):
+async def create_notebook(notebook_id: str, user_id: str):
     """
     Create a new notebook.
     """
@@ -15,6 +15,7 @@ async def create_notebook(notebook_id: str):
         await notebook_collection.insert_one({
             "metadata": {
                 "notebook_id": notebook_id,
+                "owner": "user_id",  # Replace with actual user ID
                 "created_at": datetime.datetime.utcnow(),
                 "updated_at": datetime.datetime.utcnow(),
                 "number of documents": 0,
