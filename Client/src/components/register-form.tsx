@@ -12,11 +12,14 @@ import { Label } from "@/components/ui/label";
 import { FaRegEye } from "react-icons/fa";
 import { FaRegEyeSlash } from "react-icons/fa";
 import { useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import axios from "axios";
 
 export function RegisterForm({
 	className,
 	...props
 }: React.ComponentProps<"div">) {
+	const emailRef = useRef<HTMLInputElement>(null);
 	const passwordRef = useRef<HTMLInputElement>(null);
 	const confirmPasswordRef = useRef<HTMLInputElement>(null);
 	const [passwordVisible, setPasswordVisible] = useState(false);
@@ -25,6 +28,78 @@ export function RegisterForm({
 			setPasswordVisible(!passwordVisible);
 		}
 	};
+	function handleSubmit(event: React.FormEvent) {
+		event.preventDefault();
+		const password = passwordRef.current?.value.trim();
+		const confirmPassword = confirmPasswordRef.current?.value.trim();
+		const email = emailRef.current?.value.trim();
+		if (password !== confirmPassword) {
+			toast.error("Passwords do not match", {
+				duration: 2000,
+				style: {
+					borderRadius: "10px",
+					background: "#333",
+					color: "#fff",
+				},
+			});
+			return;
+		}
+		const formData = new FormData();
+		formData.append(
+			"email",
+			email ? email : emailRef.current?.value.trim() || ""
+		);
+		formData.append(
+			"password",
+			password ? password : passwordRef.current?.value.trim() || ""
+		);
+		axios
+			.post("http://localhost:8000/register", formData,{
+				withCredentials: true,
+			})
+			.then((response) => {
+				if (response.status === 200 || response.status === 201) {
+					toast.success("Registration successful", {
+						duration: 2000,
+						style: {
+							borderRadius: "10px",
+							background: "#333",
+							color: "#fff",
+						},
+					});
+				} else {
+					toast.error("Registration has failed", {
+						duration: 2000,
+						style: {
+							borderRadius: "10px",
+							background: "#333",
+							color: "#fff",
+						},
+					});
+				}
+			})
+			.catch((error) => {
+				if (error.response) {
+					toast.error(error.response.data.message, {
+						duration: 2000,
+						style: {
+							borderRadius: "10px",
+							background: "#333",
+							color: "#fff",
+						},
+					});
+				} else {
+					toast.error("Registration failed", {
+						duration: 2000,
+						style: {
+							borderRadius: "10px",
+							background: "#333",
+							color: "#fff",
+						},
+					});
+				}
+			});
+	}
 	return (
 		<div className={cn("flex flex-col gap-6", className)} {...props}>
 			<Card className="bg-black text-white">
@@ -40,6 +115,7 @@ export function RegisterForm({
 							<div className="grid gap-3">
 								<Label htmlFor="email">Email</Label>
 								<Input
+									ref={emailRef}
 									id="email"
 									type="email"
 									placeholder="user@example.com"
@@ -98,6 +174,7 @@ export function RegisterForm({
 								<Button
 									type="submit"
 									className="w-full cursor-pointer"
+									onClick={handleSubmit}
 								>
 									Register
 								</Button>

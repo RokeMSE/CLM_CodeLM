@@ -129,7 +129,14 @@ export default function Chats() {
 	const [title, setTitle] = useState("Chat title");
 	async function createNewNotebook() {
 		// Logic to create a new notebook
-			axios.post("http://localhost:8000/api/create-notebook",{})
+		axios
+			.post("http://localhost:8000/api/create-notebook", {})
+			.then((res) => {
+				window.location.href = `/chat/${res.data.notebook_id}`;
+			})
+			.catch((err) => {
+				console.log(err);
+			});
 	}
 	return (
 		<>
