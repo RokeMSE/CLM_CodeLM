@@ -2,7 +2,7 @@ import { IoIosAdd } from "react-icons/io";
 import { RiEditBoxLine } from "react-icons/ri";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, useRef } from "react";
-import { v4 as uuidv4 } from "uuid";
+import axios from "axios";
 
 function Item(props: {
 	showEditTitle: boolean;
@@ -127,11 +127,9 @@ function EditTitle(props: {
 export default function Chats() {
 	const [showEditTitle, setShowEditTitle] = useState(false);
 	const [title, setTitle] = useState("Chat title");
-	function createNewNotebook() {
+	async function createNewNotebook() {
 		// Logic to create a new notebook
-		const newNotebookId = uuidv4(); // Generate a unique ID for the new notebook
-		console.log("New notebook created with ID:", newNotebookId);
-		window.location.href = `/chat/${newNotebookId}`; // Redirect to the new notebook page
+			axios.post("http://localhost:8000/api/create-notebook",{})
 	}
 	return (
 		<>
