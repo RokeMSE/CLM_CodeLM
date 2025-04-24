@@ -12,11 +12,14 @@ import { Label } from "@/components/ui/label";
 import { FaRegEye } from "react-icons/fa";
 import { FaRegEyeSlash } from "react-icons/fa";
 import { useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import axios from "axios";
 
 export function LoginForm({
 	className,
 	...props
 }: React.ComponentProps<"div">) {
+	const emailRef = useRef<HTMLInputElement>(null);
 	const passwordRef = useRef<HTMLInputElement>(null);
 	const [passwordVisible, setPasswordVisible] = useState(false);
 	const togglePasswordVisibility = () => {
@@ -24,6 +27,65 @@ export function LoginForm({
 			setPasswordVisible(!passwordVisible);
 		}
 	};
+	function handleSubmit(e: React.FormEvent) {
+		e.preventDefault();
+		const email = emailRef.current?.value;
+		const password = passwordRef.current?.value;
+		if (!email || !password) {
+			toast.error("Please fill in all fields");
+			return;
+		}
+		const formData = new FormData();
+		formData.append("email", email);
+		formData.append("password", password);
+		axios
+			.post("http://localhost:8000/login", formData, {
+				withCredentials: true,
+			})
+			.then((response) => {
+				if (response.status === 200) {
+					toast.success("Login successful", {
+						duration: 2000,
+						style: {
+							borderRadius: "10px",
+							background: "#333",
+							color: "#fff",
+						},
+					});
+					window.location.href = "/chats";
+				} else {
+					toast.error("Login failed", {
+						duration: 2000,
+						style: {
+							borderRadius: "10px",
+							background: "#333",
+							color: "#fff",
+						},
+					});
+				}
+			})
+			.catch((error) => {
+				if (error.response) {
+					toast.error(error.response.data.message, {
+						duration: 2000,
+						style: {
+							borderRadius: "10px",
+							background: "#333",
+							color: "#fff",
+						},
+					});
+				} else {
+					toast.error("Login failed", {
+						duration: 2000,
+						style: {
+							borderRadius: "10px",
+							background: "#333",
+							color: "#fff",
+						},
+					});
+				}
+			});
+	}
 	return (
 		<div className={cn("flex flex-col gap-6", className)} {...props}>
 			<Card className="bg-black text-white">
@@ -43,6 +105,7 @@ export function LoginForm({
 									type="email"
 									placeholder="user@example.com"
 									required
+									ref={emailRef}
 								/>
 							</div>
 							<div className="grid gap-3">
@@ -89,6 +152,7 @@ export function LoginForm({
 								<Button
 									type="submit"
 									className="w-full cursor-pointer"
+									onClick={handleSubmit}
 								>
 									Login
 								</Button>
