@@ -66,7 +66,7 @@ def decode_access_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return TokenData(
-            userID=payload.get("sub"),
+            userID=payload.get("user_id"),
             token_type=payload.get("token_type"),
             exp=payload.get("exp"),
             random=payload.get("random")
@@ -111,7 +111,7 @@ async def login_user_route(res: Response, email: str = Form(...), password: str 
             return {"message": "Invalid credentials"}
         user_id = user["user_id"]
         access_tk = create_access_token(data={"user_id": user_id})
-        refresh_tk = create_refresh_token(data={"user_idz": user_id}) # first part supposed to look like the access token, as it is used to refresh the access token
+        refresh_tk = create_refresh_token(data={"user_id": user_id}) # first part supposed to look like the access token, as it is used to refresh the access token
         res.set_cookie(key="access_token", value=access_tk, httponly=True, secure=False, samesite="lax", max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60)
         res.set_cookie(key="refresh_token", value=refresh_tk, httponly=True, secure=False, samesite="lax", max_age=30*24*60*60) # 30 days
         return {"message": "Login successful"}
@@ -154,6 +154,7 @@ async def check_token_route(res: Response, access_token: str = Cookie(None), ref
                 return {"message": "New access token created"}
         # Decode the access token
         payload = decode_access_token(access_token)
+        print(payload)
         if payload is None:
             res.status_code = status.HTTP_401_UNAUTHORIZED
             return {"message": "Invalid token"}
@@ -165,6 +166,7 @@ async def check_token_route(res: Response, access_token: str = Cookie(None), ref
             res.status_code = status.HTTP_401_UNAUTHORIZED
             return {"message": "Invalid token type"}
         # Check if the access token is valid
+        print(payload.exp)
         if payload.exp < time.time():
             res.status_code = status.HTTP_401_UNAUTHORIZED
             return {"message": "Token expired"}
