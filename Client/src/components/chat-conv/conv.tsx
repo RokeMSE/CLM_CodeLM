@@ -14,14 +14,14 @@ interface BackendRequestBody {
     history: Message[]; // Send the simple message history
 }
 
-// Define the expected structure of the successful response from your backend
+// Define the expected structure of the successful response
 interface BackendSuccessResponse {
     reply: string;
 }
 
-// --- NEW Function to Call Backend API ---
+// --- Function to Call Backend API ---
 async function getBotResponseFromBackend(userText: string, currentHistory: Message[]): Promise<string> {
-    const backendUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/chat`; // Or your specific endpoint path
+    const backendUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/chat`; // No idea if this is correct
 
     console.log(`Calling backend API at: ${backendUrl}`);
 
@@ -82,9 +82,8 @@ export default function ChatWindow() {
     const [error, setError] = useState<string | null>(null);
 
     const scrollToBottom = useCallback(() => {
-        // ... (keep scrollToBottom as is)
         if (chatBodyRef.current) {
-            // Slight delay can sometimes help ensure rendering is complete
+            // Slight delay ensure rendering is complete
             setTimeout(() => {
                  if(chatBodyRef.current) {
                     chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
@@ -97,16 +96,13 @@ export default function ChatWindow() {
         scrollToBottom();
     }, [messages, scrollToBottom]);
 
-    // --- Handle sending a message (Modified) ---
+    // --- Handle sending a message ---
     const handleSendMessage = useCallback(async (text: string) => {
         if (!text.trim() || isLoading) return;
         setError(null);
 
         const userMessage: Message = { role: 'user', text };
-        // Important: Send the history *before* adding the latest user message,
-        // matching what the previous getBotResponse expected.
-        // Your backend will decide if it needs to add the current user message to the history
-        // before passing it to the Gemini API.
+        // Important: Send the history *before* adding the latest user message, matching what the previous getBotResponse expected.
         const historyForBackend = [...messages];
 
         setMessages((prevMessages) => [...prevMessages, userMessage]);
@@ -130,18 +126,15 @@ export default function ChatWindow() {
                 errorMessage = err.message; // Use the detailed error message from getBotResponseFromBackend
             }
              setError(errorMessage);
-            // Optional: You might want to remove the user's message if the API call fails
+            // Remove the user's message if the API call fails
             // setMessages(prev => prev.slice(0, -1));
         } finally {
             setIsLoading(false);
         }
     }, [isLoading, messages, scrollToBottom]); // Add scrollToBottom if needed inside finally/catch
 
-
-    // --- JSX (Keep as is) ---
     return (
         <>
-            {/* ... rest of your JSX ... */}
          <div
                 className="w-full h-screen bg-zinc-900 flex flex-col items-center transition-all duration-500 ease-in-out"
                 ref={chatWindowRef}
@@ -151,7 +144,7 @@ export default function ChatWindow() {
                     className="w-full flex-grow bg-zinc-900 rounded-xl flex flex-col overflow-y-auto p-4 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none][scrollbar-width:none]"
                     ref={chatBodyRef}
                 >
-                    {/* Initial Message Example (Optional) */}
+                    {/* Initial Message Example */}
                     {messages.length === 0 && !isLoading && (
                         <div className="flex justify-center text-gray-400 text-sm">
                             Start the conversation by typing below.

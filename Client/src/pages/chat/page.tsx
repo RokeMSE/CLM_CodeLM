@@ -1,5 +1,6 @@
 import ChatSidebar from "@/components/chat-sidebar/sidebar";
-import Window from "@/components/chat-window/window";
+/* import Window from "@/components/chat-window/window"; */
+import Window from "@/components/chat-conv/conv";
 import Uploader from "@/components/document-uploader/uploader";
 import { useState } from "react";
 
