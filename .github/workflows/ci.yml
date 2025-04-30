@@ -1,0 +1,57 @@
+name: Code Quality Checks
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  check-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Client
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: Client/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier
+        run: prettier --check .
+        continue-on-error: true
+
+  check-backend:
+    name: Check Backend Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: Server/requirements.txt
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Server/requirements.txt
+
+      - name: Run pre-commit checks (Ruff Lint & Format)
+        run: pre-commit run --all-files
