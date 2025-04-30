@@ -1,36 +1,34 @@
-from typing import Union
 from pymongo import AsyncMongoClient
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from routes.notebookRoutes import router as notebook_router
 from routes.authRoutes import router as auth_router
-import httpx
 import logging
-from pydantic import BaseModel, Field # For request/response validation
-from typing import List, Dict, Any
+from pydantic import BaseModel, Field  # For request/response validation
+from typing import List
 import google.genai as genai
-from google.genai.types import GenerateContentConfig, SafetySetting, Part, UserContent, ModelContent
+from google.genai.types import GenerateContentConfig, Part, UserContent, ModelContent
 from dotenv import load_dotenv
 import os
 
 # --- Load Environment Variables ---
-load_dotenv() # Get the local one
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+load_dotenv()  # Get the local one
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # --- FastAPI App Initialization ---
 app = FastAPI()
 
 client = AsyncMongoClient("mongodb://localhost:27017")
 app.include_router(notebook_router, prefix="/api")
-app.include_router(auth_router) # does not need a prefix
+app.include_router(auth_router)  # does not need a prefix
 
 # --- CORS Configuration ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"], # Allows GET, POST, etc.
-    allow_headers=["*"], # Allows all headers
+    allow_methods=["*"],  # Allows GET, POST, etc.
+    allow_headers=["*"],  # Allows all headers
 )
 
 # ----------- SETTING UP THE API CALLS -----------------
@@ -100,7 +98,9 @@ async def handle_chat(request: ChatRequest):
             elif msg.role == "model":
                 history_objs.append(ModelContent(parts=[Part(text=msg.text)]))
             else:
-                logger.warning(f"Invalid role '{msg.role}' in history. Defaulting to 'user'.")
+                logger.warning(
+                    f"Invalid role '{msg.role}' in history. Defaulting to 'user'."
+                )
 
         # --- Configuration ---
         # Keeping it wholesome and Christian
@@ -124,11 +124,11 @@ async def handle_chat(request: ChatRequest):
         ]
         # Basic model config
         generation_config = GenerateContentConfig(
-            temperature = 0.9, # 90% randomness, keeping it fresh.
-            max_output_tokens = 1000, # 1000 tokens = 750 words (I think)
-            top_p = 0.9, # consider the top 90% of the probability distribution when generating text. 
-            top_k = 40,# consider the top 40 tokens with the highest probabilities when generating text.
-            safety_settings = safety_settings
+            temperature=0.9,  # 90% randomness, keeping it fresh.
+            max_output_tokens=1000,  # 1000 tokens = 750 words (I think)
+            top_p=0.9,  # consider the top 90% of the probability distribution when generating text.
+            top_k=40,  # consider the top 40 tokens with the highest probabilities when generating text.
+            safety_settings=safety_settings,
         )
         try:
             # --- Start Chat Session ---

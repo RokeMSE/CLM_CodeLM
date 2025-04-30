@@ -5,6 +5,7 @@ import datetime
 client = AsyncMongoClient("mongodb://localhost:27017")
 db = client["CodeLM"]
 
+
 async def create_user(user_id: str, password: str, email: str):
     """
     Create a new user.
@@ -22,6 +23,7 @@ async def create_user(user_id: str, password: str, email: str):
         return user_collection
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+
 
 async def get_user_by_email(email: str):
     """
