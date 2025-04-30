@@ -9,6 +9,7 @@ import logging
 from pydantic import BaseModel, Field # For request/response validation
 from typing import List, Dict, Any
 import google.genai as genai
+from google.genai.types import GenerateContentConfig, SafetySetting, Part, UserContent, ModelContent
 from dotenv import load_dotenv
 import os
 
@@ -37,8 +38,6 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- Configure Gemini API ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
     logger.error("GEMINI_API_KEY not found in environment variables.")
     raise ValueError("API Key not configured")
@@ -71,7 +70,7 @@ async def handle_chat(request: ChatRequest):
     and returns the model's reply.
     """
     if not GEMINI_API_KEY:
-         raise HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="API Key not configured on server."
         )
@@ -79,49 +78,55 @@ async def handle_chat(request: ChatRequest):
     logger.info(f"Received request: user_text='{request.user_text}', history_length={len(request.history)}")
 
     try:
-        model = genai.GenerativeModel(MODEL_NAME)
+        client = genai.Client(
+            api_key=GEMINI_API_KEY,
+            # Optional: Set the region if needed
+            # region="us-central1",
+        )
 
         # --- Prepare History for Gemini SDK ---
         # The Python SDK expects history like: [{'role': 'user'/'model', 'parts': [{'text': '...'}]}]
-        formatted_history: List[Dict[str, Any]] = []
+        history_objs = []
         for msg in request.history:
             # Basic validation for role
-            if msg.role not in ['user', 'model']:
-                 logger.warning(f"Invalid role '{msg.role}' in history, skipping.")
-                 continue
-            formatted_history.append({"role": msg.role, "parts": [{"text": msg.text}]})
+            if msg.role == "user":
+                history_objs.append(UserContent(parts=[Part(text=msg.text)]))
+            elif msg.role == "model":
+                history_objs.append(ModelContent(parts=[Part(text=msg.text)]))
+            else:
+                logger.warning(f"Invalid role '{msg.role}' in history. Defaulting to 'user'.")
 
         # --- Configuration ---
-        # Basic model config
-        generation_config = genai.types.GenerationConfig(
-            temperature = 0.9, # 90% randomness, keeping it fresh.
-            max_output_tokens = 1000, # 1000 tokens = 750 words (I think)
-            top_p = 0.9, # consider the top 90% of the probability distribution when generating text. 
-            top_k = 40 # consider the top 40 tokens with the highest probabilities when generating text.
-        )
-
-        # Keeping it wholesom and Christian
+        # Keeping it wholesome and Christian
         safety_settings = [
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
             {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
             {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
         ]
-
-        # --- Start Chat Session ---
-        chat_session = model.start_chat(
-            history=formatted_history,
-            generation_config=generation_config,
-            safety_settings=safety_settings
+        
+        # Basic model config
+        generation_config = GenerateContentConfig(
+            temperature = 0.9, # 90% randomness, keeping it fresh.
+            max_output_tokens = 1000, # 1000 tokens = 750 words (I think)
+            top_p = 0.9, # consider the top 90% of the probability distribution when generating text. 
+            top_k = 40,# consider the top 40 tokens with the highest probabilities when generating text.
+            safety_settings = safety_settings
         )
 
-        # --- Send Message to Gemini ---
-        logger.info("Sending message to Gemini...")
-        response = await chat_session.send_message_async(request.user_text) # Use async version
-        logger.info("Received response from Gemini.")
-
-        # --- Process Response ---
         try:
+            # --- Start Chat Session ---
+            chat_session = client.chats.create(
+                model=MODEL_NAME,
+                history=history_objs,
+                config=generation_config,
+            )
+
+            # --- Send Message to Gemini ---
+            logger.info("Sending message to Gemini...")
+            response = chat_session.send_message(request.user_text)
+            logger.info("Received response from Gemini.")
+            # --- Process Response ---
             reply_text = response.text
             logger.info(f"Gemini Reply Text: {reply_text}")
             return ChatResponse(reply=reply_text)
@@ -139,7 +144,7 @@ async def handle_chat(request: ChatRequest):
                 detail=block_reason
             )
         except Exception as inner_e:
-             # Catch other potential errors during response processing
+            # Catch other potential errors during response processing
             logger.error(f"Error processing Gemini response: {inner_e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
