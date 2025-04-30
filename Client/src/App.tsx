@@ -10,26 +10,26 @@ import { PublicAuth } from "./auth/authentication.tsx";
 import { BrowserRouter, Route, Routes } from "react-router";
 
 function App() {
-	return (
-		<>
-			<Toaster />
-			<BrowserRouter>
-				<Routes>
-					<Route element={<PublicAuth />}>
-						<Route path="/" element={<Login />} />
-						<Route path="/login" element={<Login />} />
-						<Route path="/register" element={<Register />} />
-						<Route path="/reset" element={<Reset />} />
-					</Route>
-					<Route element={<RequireAuth />}>
-						<Route path="/chat" element={<Chat />} />
-						<Route path="/chat/:id" element={<Chat />} />
-						<Route path="/chats" element={<Chats />} />
-					</Route>
-				</Routes>
-			</BrowserRouter>
-		</>
-	);
+  return (
+    <>
+      <Toaster />
+      <BrowserRouter>
+        <Routes>
+          <Route element={<PublicAuth />}>
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/reset" element={<Reset />} />
+          </Route>
+          <Route element={<RequireAuth />}>
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/chat/:id" element={<Chat />} />
+            <Route path="/chats" element={<Chats />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </>
+  );
 }
 
 export default App;
