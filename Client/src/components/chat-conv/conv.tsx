@@ -24,7 +24,9 @@ async function getBotResponseFromBackend(
   userText: string,
   currentHistory: Message[],
 ): Promise<string> {
-  const backendUrl = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/api/chat`; // No idea if this is correct
+  const backendUrl = `${
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+  }/api/chat`; // No idea if this is correct
 
   console.log(`Calling backend API at: ${backendUrl}`);
 
@@ -127,7 +129,10 @@ export default function ChatWindow() {
           text,
           historyForBackend,
         ); // Pass history
-        const modelMessage: Message = { role: "model", text: replyText };
+        const modelMessage: Message = {
+          role: "model",
+          text: replyText,
+        };
         setMessages((prevMessages) => [...prevMessages, modelMessage]);
       } catch (err) {
         console.error("Error in handleSendMessage:", err);
@@ -166,10 +171,14 @@ export default function ChatWindow() {
           {messages.map((message, index) => (
             <div
               key={index}
-              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
             >
               <div
-                className={`max-w-[70%] h-fit text-white p-3 rounded-xl mb-2 text-pretty whitespace-pre-wrap break-words shadow-md ${message.role === "user" ? "bg-blue-700" : "bg-zinc-700"}`}
+                className={`max-w-[70%] h-fit text-white p-3 rounded-xl mb-2 text-pretty whitespace-pre-wrap break-words shadow-md ${
+                  message.role === "user" ? "bg-blue-700" : "bg-zinc-700"
+                }`}
               >
                 {message.text}
               </div>
@@ -214,7 +223,7 @@ export default function ChatWindow() {
                 }
               }}
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50"
+              className="px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50"
             >
               Send
             </button>
