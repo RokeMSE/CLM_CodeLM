@@ -1,0 +1,14 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Find the latest tag on GitHub and use that
+    rev: v0.11.7 # Example tag, check for the latest version
+    hooks:
+      - id: ruff # Linter
+        args: [--fix] # Apply fixes automatically
+        # Optionally specify types or directories if needed, e.g.:
+        types_or: [python, pyi]
+        files: ^Server/
+      - id: ruff-format # Formatter
+        # Optionally specify types or directories if needed, e.g.:
+        types_or: [python, pyi]
+        files: ^Server/
