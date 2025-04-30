@@ -24,7 +24,7 @@ jobs:
           cache-dependency-path: Client/package-lock.json
 
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm ci && npm install -g prettier
 
       - name: Run ESLint
         run: npm run lint
