@@ -1,12 +1,10 @@
-from typing import Union
 from pymongo import AsyncMongoClient
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from routes.notebookRoutes import router as notebook_router
 from routes.authRoutes import router as auth_router
-import httpx
 import logging
-from pydantic import BaseModel, Field # For request/response validation
+from pydantic import BaseModel, Field  # For request/response validation
 from typing import List, Dict, Any
 import google.genai as genai
 from google.genai.types import GenerateContentConfig, SafetySetting, Part, UserContent, ModelContent
@@ -14,23 +12,23 @@ from dotenv import load_dotenv
 import os
 
 # --- Load Environment Variables ---
-load_dotenv() # Get the local one
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+load_dotenv()  # Get the local one
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # --- FastAPI App Initialization ---
 app = FastAPI()
 
 client = AsyncMongoClient("mongodb://localhost:27017")
 app.include_router(notebook_router, prefix="/api")
-app.include_router(auth_router) # does not need a prefix
+app.include_router(auth_router)  # does not need a prefix
 
 # --- CORS Configuration ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"], # Allows GET, POST, etc.
-    allow_headers=["*"], # Allows all headers
+    allow_methods=["*"],  # Allows GET, POST, etc.
+    allow_headers=["*"],  # Allows all headers
 )
 
 # ----------- SETTING UP THE API CALLS -----------------
@@ -48,19 +46,23 @@ else:
     except Exception as e:
         logger.error(f"Error configuring Gemini API: {e}")
 
-MODEL_NAME = "gemini-2.0-flash" 
+MODEL_NAME = "gemini-2.0-flash"
+
 
 # --- Pydantic Models for Data Validation ---
 class Message(BaseModel):
-    role: str # Keep as str, validation happens later if needed
+    role: str  # Keep as str, validation happens later if needed
     text: str
 
+
 class ChatRequest(BaseModel):
-    user_text: str = Field(..., min_length=1) # Ensure user_text is not empty
-    history: List[Message] # Expects a list of Message objects
+    user_text: str = Field(..., min_length=1)  # Ensure user_text is not empty
+    history: List[Message]  # Expects a list of Message objects
+
 
 class ChatResponse(BaseModel):
-    reply: str # MIGHT HAVE TO HANDLE .MD OUTPUT LATER ON
+    reply: str  # MIGHT HAVE TO HANDLE .MD OUTPUT LATER ON
+
 
 # --- API Endpoint ---
 @app.post("/api/chat", response_model=ChatResponse)
@@ -72,10 +74,12 @@ async def handle_chat(request: ChatRequest):
     if not GEMINI_API_KEY:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="API Key not configured on server."
+            detail="API Key not configured on server.",
         )
 
-    logger.info(f"Received request: user_text='{request.user_text}', history_length={len(request.history)}")
+    logger.info(
+        f"Received request: user_text='{request.user_text}', history_length={len(request.history)}"
+    )
 
     try:
         client = genai.Client(
@@ -99,12 +103,23 @@ async def handle_chat(request: ChatRequest):
         # --- Configuration ---
         # Keeping it wholesome and Christian
         safety_settings = [
-            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+            },
         ]
-        
         # Basic model config
         generation_config = GenerateContentConfig(
             temperature = 0.9, # 90% randomness, keeping it fresh.
@@ -113,7 +128,6 @@ async def handle_chat(request: ChatRequest):
             top_k = 40,# consider the top 40 tokens with the highest probabilities when generating text.
             safety_settings = safety_settings
         )
-
         try:
             # --- Start Chat Session ---
             chat_session = client.chats.create(
@@ -138,17 +152,18 @@ async def handle_chat(request: ChatRequest):
             feedback = response.prompt_feedback
             block_reason = "Content may be blocked by safety settings."
             if feedback.block_reason:
-                block_reason += f" Reason: {feedback.block_reason.name}" # Use .name for enum
+                block_reason += (
+                    f" Reason: {feedback.block_reason.name}"  # Use .name for enum
+                )
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=block_reason
+                status_code=status.HTTP_400_BAD_REQUEST, detail=block_reason
             )
         except Exception as inner_e:
             # Catch other potential errors during response processing
             logger.error(f"Error processing Gemini response: {inner_e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error processing the bot's response."
+                detail="Error processing the bot's response.",
             )
 
     except Exception as e:
@@ -157,8 +172,9 @@ async def handle_chat(request: ChatRequest):
         # You might want more specific error handling based on Gemini SDK exceptions
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while contacting the AI service: {str(e)}"
+            detail=f"An error occurred while contacting the AI service: {str(e)}",
         )
+
 
 # --- Add a root endpoint for basic testing ---
 @app.get("/")

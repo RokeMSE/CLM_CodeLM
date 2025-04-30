@@ -1,0 +1,37 @@
+
+echo "Running frontend checks..."
+cd Client
+npm run format && npm run lint
+frontend_exit_code=$?
+cd .. 
+
+if [ $frontend_exit_code -ne 0 ]; then
+  echo "Frontend checks failed!"
+  exit $frontend_exit_code
+fi
+echo "Frontend checks passed."
+
+
+
+VENV_ACTIVATE="./Server/.venv/bin/activate"
+
+if [ -f "$VENV_ACTIVATE" ]; then
+  echo "Activating Python virtual environment: $VENV_ACTIVATE"
+  . "$VENV_ACTIVATE" 
+else
+  echo "Warning: Python virtual environment activation script not found at $VENV_ACTIVATE."
+  echo "Python checks might fail if pre-commit is not globally available or dependencies are missing."
+fi
+
+echo "Running Python checks..."
+pre-commit run --all-files
+python_exit_code=$?
+
+if [ $python_exit_code -ne 0 ]; then
+  echo "Python checks failed!"
+  exit $python_exit_code
+fi
+echo "Python checks passed."
+
+echo "All pre-commit checks passed."
+exit 0
