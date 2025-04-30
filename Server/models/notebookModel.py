@@ -6,7 +6,6 @@ client = AsyncMongoClient("mongodb://localhost:27017")
 db = client["CodeLM"]
 # each notebook is a collection that holds the user's input and the model's output
 
-
 async def create_notebook(notebook_id: str, user_id: str):
     """
     Create a new notebook.
@@ -41,7 +40,6 @@ async def get_notebook(notebook_id: str):  # get messages in the notebook
     if notebook_collection is None:
         raise HTTPException(status_code=404, detail="Notebook not found")
     return notebook_collection
-
 
 async def delete_notebook(notebook_id: str):
     """

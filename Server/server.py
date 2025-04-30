@@ -1,10 +1,12 @@
+from typing import Union
 from pymongo import AsyncMongoClient
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from routes.notebookRoutes import router as notebook_router
 from routes.authRoutes import router as auth_router
+import httpx
 import logging
-from pydantic import BaseModel, Field  # For request/response validation
+from pydantic import BaseModel, Field # For request/response validation
 from typing import List, Dict, Any
 import google.genai as genai
 from google.genai.types import GenerateContentConfig, SafetySetting, Part, UserContent, ModelContent
@@ -12,23 +14,23 @@ from dotenv import load_dotenv
 import os
 
 # --- Load Environment Variables ---
-load_dotenv()  # Get the local one
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+load_dotenv() # Get the local one
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # --- FastAPI App Initialization ---
 app = FastAPI()
 
 client = AsyncMongoClient("mongodb://localhost:27017")
 app.include_router(notebook_router, prefix="/api")
-app.include_router(auth_router)  # does not need a prefix
+app.include_router(auth_router) # does not need a prefix
 
 # --- CORS Configuration ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows GET, POST, etc.
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"], # Allows GET, POST, etc.
+    allow_headers=["*"], # Allows all headers
 )
 
 # ----------- SETTING UP THE API CALLS -----------------
