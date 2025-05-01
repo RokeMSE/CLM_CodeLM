@@ -1,9 +1,12 @@
 from http.client import HTTPException
 from pymongo import AsyncMongoClient
 import datetime
+import os
 
-client = AsyncMongoClient("mongodb://localhost:27017")
-db = client["CodeLM"]
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+
+mongo_client = AsyncMongoClient(MONGO_URI)
+db = mongo_client["CodeLM"]
 # each notebook is a collection that holds the user's input and the model's output
 
 

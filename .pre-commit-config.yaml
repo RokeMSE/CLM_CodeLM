@@ -4,7 +4,7 @@ repos:
     rev: v0.11.7 # Example tag, check for the latest version
     hooks:
       - id: ruff # Linter
-        args: [--fix] # Apply fixes automatically
+        # args: [--fix] # Apply fixes automatically
         # Optionally specify types or directories if needed, e.g.:
         types_or: [python, pyi]
         files: ^Server/

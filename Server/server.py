@@ -18,7 +18,10 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 # --- FastAPI App Initialization ---
 app = FastAPI()
 
-client = AsyncMongoClient("mongodb://localhost:27017")
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+
+mongo_client = AsyncMongoClient(MONGO_URI)
+
 app.include_router(notebook_router, prefix="/api")
 app.include_router(auth_router)  # does not need a prefix
 
