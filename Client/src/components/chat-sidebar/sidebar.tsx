@@ -1,7 +1,7 @@
 import ChatItem from "../chat-item/item";
 import { FaNoteSticky } from "react-icons/fa6";
 import { IoIosArrowBack } from "react-icons/io";
-import { useEffect, useRef, useState  } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import axios from "axios";
 
@@ -15,7 +15,7 @@ export default function ChatSidebar(props: {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [files, setFiles] = useState([]);
-  const { setShowUploader, reloadSidebar} = props;
+  const { setShowUploader, reloadSidebar } = props;
   const openUploader = () => {
     setShowUploader(true);
     console.log("open uploader");
@@ -35,16 +35,19 @@ export default function ChatSidebar(props: {
       return;
     }
     setLoading(true);
-    axios.get("http://localhost:8000/api/notebook_files", {
-      params: { notebookID: notebookID }
-    }).then((response) => {
-      const files = response.data.files;
-      setFiles(files);
-      setLoading(false);
-    }).catch((error) => {
-      console.error("Error fetching files:", error);
-      setLoading(false);
-    });
+    axios
+      .get("http://localhost:8000/api/notebook_files", {
+        params: { notebookID: notebookID },
+      })
+      .then((response) => {
+        const files = response.data.files;
+        setFiles(files);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching files:", error);
+        setLoading(false);
+      });
   }, [reloadSidebar]);
   return (
     <>
@@ -63,27 +66,25 @@ export default function ChatSidebar(props: {
             <FaNoteSticky className="text-white text-lg ml-2" />
           </div>
           <div className="w-full mt-8">
-          {loading ? (
-            <>
-              {Array.from({ length: 5 }).map((_, index) => (
+            {loading ? (
+              <>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="w-full h-12 mb-2">
+                    <Skeleton className="h-full w-full rounded-lg" />
+                  </div>
+                ))}
+              </>
+            ) : files.length > 0 ? (
+              files.map((file: string, index: number) => (
                 <div key={index} className="w-full h-12 mb-2">
-                  <Skeleton className="h-full w-full rounded-lg" />
+                  <ChatItem filename={String(file)} />
                 </div>
-              ))}
-            </>
-          ) : files.length > 0 ? (
-            files.map((file: string, index: number) => (
-              <div key={index} className="w-full h-12 mb-2">
-                <ChatItem
-                  filename={String(file)}
-                />
+              ))
+            ) : (
+              <div className="flex justify-center items-center h-32">
+                <p className="text-zinc-500">No files found</p>
               </div>
-            ))
-          ) : (
-            <div className="flex justify-center items-center h-32">
-              <p className="text-zinc-500">No files found</p>
-            </div>
-          )}
+            )}
           </div>
         </div>
       </div>

@@ -30,20 +30,21 @@ export default function Uploader(props: {
           formData.append("files", files[i]);
         }
       }
-      axios.post("http://localhost:8000/api/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      })
-      .then((response) => {
-        console.log("Files uploaded successfully:", response.data);
-        toast.success("Files uploaded successfully");
-        props.setShowUploader(false);
-      })
-      .catch((error) => {
-        console.error("Error uploading files:", error);
-        toast.error("Error uploading files");
-      });
+      axios
+        .post("http://localhost:8000/api/upload", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((response) => {
+          console.log("Files uploaded successfully:", response.data);
+          toast.success("Files uploaded successfully");
+          props.setShowUploader(false);
+        })
+        .catch((error) => {
+          console.error("Error uploading files:", error);
+          toast.error("Error uploading files");
+        });
     };
     input.click();
   }
