@@ -1,13 +1,18 @@
 import { FaFilePdf } from "react-icons/fa6";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export default function ChatItem() {
+export default function ChatItem(
+  props:{
+    filename: string;
+  }
+) {
+  const { filename } = props;
   return (
     <div className="h-8 shadow-md mb-2 mx-4 rounded-lg cursor-pointer hover:bg-zinc-800 transition duration-300 ease-in-out">
       <div className="flex flex-row items-center h-full">
         <FaFilePdf className="text-red-600 ml-4" />
         <h1 className="text-white text-md ml-2 whitespace-nowrap overflow-ellipsis">
-          PDF Title
+          {filename}
         </h1>
         <Checkbox
           className="border-white

@@ -1,16 +1,21 @@
 import ChatItem from "../chat-item/item";
 import { FaNoteSticky } from "react-icons/fa6";
 import { IoIosArrowBack } from "react-icons/io";
-import { useRef } from "react";
+import { useEffect, useRef, useState  } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import axios from "axios";
 
 export default function ChatSidebar(props: {
   showUploader: boolean;
   setShowUploader: (show: boolean) => void;
+  reloadSidebar: boolean;
+  setReloadSidebar: (reload: boolean) => void;
 }) {
   const minimizeRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const { setShowUploader } = props;
+  const [loading, setLoading] = useState(true);
+  const [files, setFiles] = useState([]);
+  const { setShowUploader, reloadSidebar} = props;
   const openUploader = () => {
     setShowUploader(true);
     console.log("open uploader");
@@ -23,6 +28,24 @@ export default function ChatSidebar(props: {
       minimizeRef.current?.classList.toggle("-translate-x-72");
     }
   };
+  useEffect(() => {
+    const notebookID = window.location.pathname.split("/").pop();
+    if (!notebookID) {
+      console.error("Notebook ID not found");
+      return;
+    }
+    setLoading(true);
+    axios.get("http://localhost:8000/api/notebook_files", {
+      params: { notebookID: notebookID }
+    }).then((response) => {
+      const files = response.data.files;
+      setFiles(files);
+      setLoading(false);
+    }).catch((error) => {
+      console.error("Error fetching files:", error);
+      setLoading(false);
+    });
+  }, [reloadSidebar]);
   return (
     <>
       <div
@@ -40,18 +63,27 @@ export default function ChatSidebar(props: {
             <FaNoteSticky className="text-white text-lg ml-2" />
           </div>
           <div className="w-full mt-8">
-            <ChatItem />
-            <ChatItem />
-            <ChatItem />
-            <ChatItem />
-            <ChatItem />
-            <Skeleton className="w-10/12 h-8 bg-zinc-800 mb-4 ml-6 rounded-full" />
-            <Skeleton className="w-10/12 h-8 bg-zinc-800 mb-4 ml-6 rounded-full" />
-            <Skeleton className="w-10/12 h-8 bg-zinc-800 mb-4 ml-6 rounded-full" />
-            <Skeleton className="w-10/12 h-8 bg-zinc-800 mb-4 ml-6 rounded-full" />
-            <Skeleton className="w-10/12 h-8 bg-zinc-800 mb-4 ml-6 rounded-full" />
-            <Skeleton className="w-10/12 h-8 bg-zinc-800 mb-4 ml-6 rounded-full" />
-            <Skeleton className="w-10/12 h-8 bg-zinc-800 mb-4 ml-6 rounded-full" />
+          {loading ? (
+            <>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className="w-full h-12 mb-2">
+                  <Skeleton className="h-full w-full rounded-lg" />
+                </div>
+              ))}
+            </>
+          ) : files.length > 0 ? (
+            files.map((file: string, index: number) => (
+              <div key={index} className="w-full h-12 mb-2">
+                <ChatItem
+                  filename={String(file)}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="flex justify-center items-center h-32">
+              <p className="text-zinc-500">No files found</p>
+            </div>
+          )}
           </div>
         </div>
       </div>

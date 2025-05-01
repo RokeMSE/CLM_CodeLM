@@ -122,6 +122,7 @@ async def handle_chat(request: ChatRequest):
                 "threshold": "BLOCK_MEDIUM_AND_ABOVE",
             },
         ]
+
         # Basic model config
         generation_config = GenerateContentConfig(
             temperature=0.9,  # 90% randomness, keeping it fresh.

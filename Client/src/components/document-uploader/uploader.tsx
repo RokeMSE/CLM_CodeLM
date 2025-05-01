@@ -2,10 +2,13 @@ import { MdOutlineFileUpload } from "react-icons/md";
 import { useDropzone } from "react-dropzone";
 import { useCallback } from "react";
 import { IoMdClose } from "react-icons/io";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 export default function Uploader(props: {
   showUploader: boolean;
   setShowUploader: (show: boolean) => void;
+  setReloadSidebar: (reload: boolean) => void;
 }) {
   function openFileDialog() {
     const input = document.createElement("input");
@@ -13,15 +16,34 @@ export default function Uploader(props: {
     input.multiple = true;
     input.accept = ".pdf, .docx, .txt"; // Add more file types as needed
     input.onchange = (event) => {
+      const notebookID = window.location.pathname.split("/").pop();
+      if (!notebookID) {
+        toast.error("Notebook ID not found");
+        return;
+      }
+      const formData = new FormData();
+      formData.append("notebookID", notebookID);
       const files = (event.target as HTMLInputElement)?.files;
       if (files) {
         // Handle the selected files
         for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          console.log("Selected file:", file);
-          // You can perform further actions with the file here
+          formData.append("files", files[i]);
         }
       }
+      axios.post("http://localhost:8000/api/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((response) => {
+        console.log("Files uploaded successfully:", response.data);
+        toast.success("Files uploaded successfully");
+        props.setShowUploader(false);
+      })
+      .catch((error) => {
+        console.error("Error uploading files:", error);
+        toast.error("Error uploading files");
+      });
     };
     input.click();
   }
