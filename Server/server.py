@@ -31,24 +31,6 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-# ----------- SETTING UP THE API CALLS -----------------
-# --- Configure Logging ---
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-if not GEMINI_API_KEY:
-    logger.error("GEMINI_API_KEY not found in environment variables.")
-    raise ValueError("API Key not configured")
-else:
-    try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        logger.info("Gemini API configured successfully.")
-    except Exception as e:
-        logger.error(f"Error configuring Gemini API: {e}")
-
-MODEL_NAME = "gemini-2.0-flash"
-
-
 # --- Pydantic Models for Data Validation ---
 class Message(BaseModel):
     role: str  # Keep as str, validation happens later if needed
@@ -76,10 +58,6 @@ async def handle_chat(request: ChatRequest):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="API Key not configured on server.",
         )
-
-    logger.info(
-        f"Received request: user_text='{request.user_text}', history_length={len(request.history)}"
-    )
 
     try:
         client = genai.Client(
