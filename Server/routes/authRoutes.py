@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Cookie, Response, status, Form
 from fastapi.security import OAuth2PasswordBearer
-from models.authModel import get_user_by_email, get_user_by_id
+from models.authModel import get_user_by_email, get_user_by_id, create_user
 import uuid
 import jwt
 from jwt.exceptions import InvalidTokenError
@@ -110,6 +110,7 @@ async def register_user_route(
             return {"message": "Email already registered"}
         user_id = str(uuid.uuid4())
         password = hash_password(password)
+        await create_user(user_id, password, email)
         res.status_code = status.HTTP_201_CREATED
         return {"user_id": user_id}
     except Exception as e:
