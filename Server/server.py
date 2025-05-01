@@ -11,14 +11,19 @@ from google.genai.types import GenerateContentConfig, Part, UserContent, ModelCo
 from dotenv import load_dotenv
 import os
 
+# --- Configure Logging ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 # --- Load Environment Variables ---
 load_dotenv()  # Get the local one
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+MODEL_NAME = "gemini-2.0-flash"
 
 # --- FastAPI App Initialization ---
 app = FastAPI()
 
-client = AsyncMongoClient("mongodb://localhost:27017")
+mongo_client = AsyncMongoClient("mongodb://localhost:27017")
 app.include_router(notebook_router, prefix="/api")
 app.include_router(auth_router)  # does not need a prefix
 
@@ -45,7 +50,6 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str  # MIGHT HAVE TO HANDLE .MD OUTPUT LATER ON
 
-
 # --- API Endpoint ---
 @app.post("/api/chat", response_model=ChatResponse)
 async def handle_chat(request: ChatRequest):
@@ -60,7 +64,7 @@ async def handle_chat(request: ChatRequest):
         )
 
     try:
-        client = genai.Client(
+        gemini_client = genai.Client(
             api_key=GEMINI_API_KEY,
             # Optional: Set the region if needed
             # region="us-central1",
@@ -111,7 +115,7 @@ async def handle_chat(request: ChatRequest):
         )
         try:
             # --- Start Chat Session ---
-            chat_session = client.chats.create(
+            chat_session = gemini_client.chats.create(
                 model=MODEL_NAME,
                 history=history_objs,
                 config=generation_config,
@@ -126,7 +130,7 @@ async def handle_chat(request: ChatRequest):
             logger.info(f"Gemini Reply Text: {reply_text}")
             return ChatResponse(reply=reply_text)
 
-        except ValueError:
+        except ValueError as ve:
             # This usually indicates the response was blocked by safety settings
             logger.warning("Gemini response might be blocked by safety settings.")
             # Optionally inspect response.prompt_feedback here
