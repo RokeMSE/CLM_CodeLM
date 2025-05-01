@@ -53,7 +53,14 @@ async def delete_notebook(notebook_id: str):
     await notebook_collection.drop()
     return {"detail": "Notebook deleted"}
 
-async def insert_file_metadata(notebook_id: str, file_name: str, file_type: str, file_size: int, file_original_name: str):
+
+async def insert_file_metadata(
+    notebook_id: str,
+    file_name: str,
+    file_type: str,
+    file_size: int,
+    file_original_name: str,
+):
     """
     Insert file metadata into the notebook.
     """
@@ -61,17 +68,22 @@ async def insert_file_metadata(notebook_id: str, file_name: str, file_type: str,
         notebook_collection = db[notebook_id]
         if notebook_collection is None:
             raise HTTPException(status_code=404, detail="Notebook not found")
-        await notebook_collection.insert_one({
-            "file_name": file_name,
-            "file_type": file_type,
-            "file_size": file_size,
-            "file_original_name": file_original_name,
-            "created_at": datetime.datetime.utcnow(),
-        })
+        await notebook_collection.insert_one(
+            {
+                "file_name": file_name,
+                "file_type": file_type,
+                "file_size": file_size,
+                "file_original_name": file_original_name,
+                "created_at": datetime.datetime.utcnow(),
+            }
+        )
         return {"detail": "File metadata inserted"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error inserting file metadata: {str(e)}")
-    
+        raise HTTPException(
+            status_code=500, detail=f"Error inserting file metadata: {str(e)}"
+        )
+
+
 async def get_files(notebook_id: str):
     """
     Get all files in the notebook.
@@ -80,7 +92,9 @@ async def get_files(notebook_id: str):
         notebook_collection = db[notebook_id]
         if notebook_collection is None:
             raise HTTPException(status_code=404, detail="Notebook not found")
-        files = await notebook_collection.find({"file_name": {"$exists": True}}).to_list(length=None)
+        files = await notebook_collection.find(
+            {"file_name": {"$exists": True}}
+        ).to_list(length=None)
         return files
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching files: {str(e)}")

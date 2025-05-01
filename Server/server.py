@@ -7,7 +7,7 @@ import logging
 from pydantic import BaseModel, Field  # For request/response validation
 from typing import List
 import google.genai as genai
-from google.genai.types import GenerateContentConfig, SafetySetting, Part, UserContent, ModelContent
+from google.genai.types import GenerateContentConfig, Part, UserContent, ModelContent
 from dotenv import load_dotenv
 import os
 
@@ -98,7 +98,9 @@ async def handle_chat(request: ChatRequest):
             elif msg.role == "model":
                 history_objs.append(ModelContent(parts=[Part(text=msg.text)]))
             else:
-                logger.warning(f"Invalid role '{msg.role}' in history. Defaulting to 'user'.")
+                logger.warning(
+                    f"Invalid role '{msg.role}' in history. Defaulting to 'user'."
+                )
 
         # --- Configuration ---
         # Keeping it wholesome and Christian
@@ -120,14 +122,14 @@ async def handle_chat(request: ChatRequest):
                 "threshold": "BLOCK_MEDIUM_AND_ABOVE",
             },
         ]
-       
+
         # Basic model config
         generation_config = GenerateContentConfig(
-            temperature = 0.9, # 90% randomness, keeping it fresh.
-            max_output_tokens = 1000, # 1000 tokens = 750 words (I think)
-            top_p = 0.9, # consider the top 90% of the probability distribution when generating text. 
-            top_k = 40,# consider the top 40 tokens with the highest probabilities when generating text.
-            safety_settings = safety_settings
+            temperature=0.9,  # 90% randomness, keeping it fresh.
+            max_output_tokens=1000,  # 1000 tokens = 750 words (I think)
+            top_p=0.9,  # consider the top 90% of the probability distribution when generating text.
+            top_k=40,  # consider the top 40 tokens with the highest probabilities when generating text.
+            safety_settings=safety_settings,
         )
         try:
             # --- Start Chat Session ---

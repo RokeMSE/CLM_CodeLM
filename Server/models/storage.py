@@ -1,11 +1,13 @@
 import os
 from supabase import create_client, Client
 from dotenv import load_dotenv
+
 load_dotenv()
 
 url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
+
 
 def upload(file: bytes, file_name: str, bucket_name: str, notebook_id: str):
     """
@@ -13,7 +15,9 @@ def upload(file: bytes, file_name: str, bucket_name: str, notebook_id: str):
     """
     try:
         # Upload the file
-        response = supabase.storage.from_(bucket_name).upload(f'{notebook_id}/{file_name}', file)
+        response = supabase.storage.from_(bucket_name).upload(
+            f"{notebook_id}/{file_name}", file
+        )
         print(response)
         if response and response.full_path:
             print(f"File {file_name} uploaded successfully.")
