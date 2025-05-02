@@ -1,15 +1,17 @@
-from fastapi import APIRouter, Cookie, Response, status, Form
-from fastapi.security import OAuth2PasswordBearer
-from models.authModel import get_user_by_email, get_user_by_id, create_user
+import os
+import time
 import uuid
+from datetime import datetime, timedelta
+
 import jwt
+from dotenv import load_dotenv
+from fastapi import APIRouter, Cookie, Form, Response, status
+from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 from pydantic import BaseModel
-import os
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
-import time
+
+from models.authModel import create_user, get_user_by_email, get_user_by_id
 
 load_dotenv()
 

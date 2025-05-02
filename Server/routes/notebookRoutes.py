@@ -1,31 +1,32 @@
+import os
+import uuid
+from typing import List
+
+import google.genai as genai
+from dotenv import load_dotenv
 from fastapi import (
     APIRouter,
     Cookie,
-    Request,
-    Response,
-    status,
-    HTTPException,
-    UploadFile,
     File,
     Form,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+    status,
 )
+from google.genai.types import GenerateContentConfig, ModelContent, Part, UserContent
+from pydantic import BaseModel, Field  # For request/response validation
+
 from models.notebookModel import (
     create_notebook,
-    insert_file_metadata,
+    delete_notebook,
     get_files,
     get_notebook_messages,
-    delete_notebook,
+    insert_file_metadata,
     insert_message,
 )
 from models.storage import upload
-from typing import List
-import logging
-from pydantic import BaseModel, Field  # For request/response validation
-import uuid
-import google.genai as genai
-from google.genai.types import GenerateContentConfig, UserContent, ModelContent, Part
-from dotenv import load_dotenv
-import os
 
 load_dotenv()
 # --- Load Environment Variables ---
@@ -35,18 +36,9 @@ MODEL_NAME = "gemini-2.0-flash"
 # ----------- SETTING UP THE API CALLS -----------------
 # --- Configure Logging ---
 router = APIRouter()
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 if not GEMINI_API_KEY:
-    logger.error("GEMINI_API_KEY not found in environment variables.")
     raise ValueError("API Key not configured")
-else:
-    try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        logger.info("Gemini API configured successfully.")
-    except Exception as e:
-        logger.error(f"Error configuring Gemini API: {e}")
 
 
 # --- Pydantic Models for Data Validation ---
@@ -123,10 +115,6 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             detail="API Key not configured on server.",
         )
 
-    logger.info(
-        f"Received request: user_text='{request.user_text}', history_length={len(request.history)}"
-    )
-
     try:
         client = genai.Client(
             api_key=GEMINI_API_KEY,
@@ -143,10 +131,6 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
                 history_objs.append(UserContent(parts=[Part(text=msg.text)]))
             elif msg.role == "model":
                 history_objs.append(ModelContent(parts=[Part(text=msg.text)]))
-            else:
-                logger.warning(
-                    f"Invalid role '{msg.role}' in history. Defaulting to 'user'."
-                )
 
         # --- Configuration ---
         # Keeping it wholesome and Christian
@@ -185,9 +169,7 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             )
 
             # --- Send Message to Gemini ---
-            logger.info("Sending message to Gemini...")
             response = chat_session.send_message(request.user_text)
-            logger.info("Received response from Gemini.")
             # --- Process Response ---
             reply_text = response.text
             print("User ID: ", user_id)
@@ -202,12 +184,10 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
                 responder=MODEL_NAME,
                 message=reply_text,
             )
-            logger.info(f"Gemini Reply Text: {reply_text}")
             return ChatResponse(reply=reply_text)
 
         except ValueError:
             # This usually indicates the response was blocked by safety settings
-            logger.warning("Gemini response might be blocked by safety settings.")
             # Optionally inspect response.prompt_feedback here
             feedback = response.prompt_feedback
             block_reason = "Content may be blocked by safety settings."
@@ -218,17 +198,15 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail=block_reason
             )
-        except Exception as inner_e:
+        except Exception as e:
             # Catch other potential errors during response processing
-            logger.error(f"Error processing Gemini response: {inner_e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error processing the bot's response.",
+                detail=f"Error processing the bot's response.{str(e)}",
             )
 
     except Exception as e:
         # Catch potential errors during API call setup or sending
-        logger.error(f"Error interacting with Gemini API: {e}")
         # You might want more specific error handling based on Gemini SDK exceptions
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

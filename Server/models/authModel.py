@@ -1,7 +1,8 @@
-from http.client import HTTPException
-from pymongo import AsyncMongoClient
 import datetime
 import os
+from http.client import HTTPException
+
+from pymongo import AsyncMongoClient
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 

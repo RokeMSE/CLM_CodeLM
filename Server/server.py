@@ -1,10 +1,12 @@
-from pymongo import AsyncMongoClient
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes.notebookRoutes import router as notebook_router
+from pymongo import AsyncMongoClient
+
 from routes.authRoutes import router as auth_router
-from dotenv import load_dotenv
-import os
+from routes.notebookRoutes import router as notebook_router
 
 # --- Load Environment Variables ---
 load_dotenv()  # Get the local one

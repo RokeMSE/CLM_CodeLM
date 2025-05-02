@@ -184,7 +184,7 @@ export default function ChatWindow() {
         setIsLoading(false);
       }
     },
-    [isLoading, messages, scrollToBottom],
+    [isLoading, messages],
   ); // Add scrollToBottom if needed inside finally/catch
 
   return (
