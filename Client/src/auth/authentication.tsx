@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
-import axios from "axios";
-import { toast } from "react-hot-toast";
+import api from "@/lib/axiosInstance";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function RequireAuth() {
@@ -9,47 +8,17 @@ export default function RequireAuth() {
   const location = useLocation();
 
   useEffect(() => {
-    axios
-      .post(
-        "http://localhost:8000/check_token",
-        {},
-        {
-          withCredentials: true,
-        },
-      )
+    api
+      .post("/check_token")
       .then((response) => {
         if (response.status === 200) {
           setIsAuthenticated("true");
-          toast.success("Session is valid", {
-            duration: 2000,
-            style: {
-              borderRadius: "10px",
-              background: "#333",
-              color: "#fff",
-            },
-          });
         } else {
           setIsAuthenticated("false");
-          toast.error("Session expired. Please log in again.", {
-            duration: 2000,
-            style: {
-              borderRadius: "10px",
-              background: "#333",
-              color: "#fff",
-            },
-          });
         }
       })
       .catch(() => {
         setIsAuthenticated("false");
-        toast.error("Session expired. Please log in again.", {
-          duration: 2000,
-          style: {
-            borderRadius: "10px",
-            background: "#333",
-            color: "#fff",
-          },
-        });
       });
   }, []);
 
@@ -71,47 +40,17 @@ export function PublicAuth() {
   const location = useLocation();
 
   useEffect(() => {
-    axios
-      .post(
-        "http://localhost:8000/check_token",
-        {},
-        {
-          withCredentials: true,
-        },
-      )
+    api
+      .post("/check_token")
       .then((response) => {
         if (response.status === 200) {
           setIsAuthenticated("true");
-          toast.success("Session is valid", {
-            duration: 2000,
-            style: {
-              borderRadius: "10px",
-              background: "#333",
-              color: "#fff",
-            },
-          });
         } else {
           setIsAuthenticated("false");
-          toast.error("Session expired. Please log in again.", {
-            duration: 2000,
-            style: {
-              borderRadius: "10px",
-              background: "#333",
-              color: "#fff",
-            },
-          });
         }
       })
       .catch(() => {
         setIsAuthenticated("false");
-        toast.error("Session expired. Please log in again.", {
-          duration: 2000,
-          style: {
-            borderRadius: "10px",
-            background: "#333",
-            color: "#fff",
-          },
-        });
       });
   }, []);
 

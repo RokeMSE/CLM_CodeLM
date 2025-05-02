@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Cookie, Response, status, Form
+from fastapi import APIRouter, Cookie, Response, status
 from fastapi.security import OAuth2PasswordBearer
 from models.authModel import get_user_by_email, get_user_by_id, create_user
 import uuid
@@ -34,6 +34,11 @@ class TokenData(BaseModel):
 class User(BaseModel):
     userID: str
     email: str
+
+
+class UserCredential(BaseModel):
+    email: str
+    password: str
 
 
 class UserInDB(User):
@@ -95,22 +100,20 @@ router = APIRouter()
 
 
 @router.post("/register")
-async def register_user_route(
-    res: Response, email: str = Form(...), password: str = Form(...)
-):
+async def register_user_route(res: Response, user_cred: UserCredential):
     """
     Register a new user.
     """
     try:
         print("Registering a new user")
         # Check if the email is already registered
-        user = await get_user_by_email(email)
+        user = await get_user_by_email(user_cred.email)
         if user:
             res.status_code = status.HTTP_400_BAD_REQUEST
             return {"message": "Email already registered"}
         user_id = str(uuid.uuid4())
-        password = hash_password(password)
-        await create_user(user_id, password, email)
+        hashed_password = hash_password(user_cred.password)
+        await create_user(user_id, hashed_password, user_cred.email)
         res.status_code = status.HTTP_201_CREATED
         return {"user_id": user_id}
     except Exception as e:
@@ -119,17 +122,15 @@ async def register_user_route(
 
 
 @router.post("/login")
-async def login_user_route(
-    res: Response, email: str = Form(...), password: str = Form(...)
-):
+async def login_user_route(res: Response, user_cred: UserCredential):
     """
     Login a user and return an access token.
     """
     try:
         print("Logging in user")
         # Check if the email is registered
-        user = await get_user_by_email(email)
-        if not user or not verify_password(password, user["password"]):
+        user = await get_user_by_email(user_cred.email)
+        if not user or not verify_password(user_cred.password, user["password"]):
             res.status_code = status.HTTP_401_UNAUTHORIZED
             return {"message": "Invalid credentials"}
         user_id = user["user_id"]

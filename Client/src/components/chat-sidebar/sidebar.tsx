@@ -1,54 +1,63 @@
-import ChatItem from "../chat-item/item";
+import DocumentItem from "../chat-item/item";
 import { FaNoteSticky } from "react-icons/fa6";
 import { IoIosArrowBack } from "react-icons/io";
 import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import axios from "axios";
 
-export default function ChatSidebar(props: {
-  showUploader: boolean;
-  setShowUploader: (show: boolean) => void;
+interface SidebarProps {
+  isUploaderVisible: boolean;
+  setUploaderVisible: (isVisible: boolean) => void;
   reloadSidebar: boolean;
-  setReloadSidebar: (reload: boolean) => void;
-}) {
-  const minimizeRef = useRef<HTMLDivElement>(null);
+  setReloadSidebar: (shouldReload: boolean) => void;
+}
+
+export default function DocumentSidebar({
+  setUploaderVisible,
+  reloadSidebar,
+}: SidebarProps) {
+  const toggleButtonRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
-  const [files, setFiles] = useState([]);
-  const { setShowUploader, reloadSidebar } = props;
-  const openUploader = () => {
-    setShowUploader(true);
-    console.log("open uploader");
+  const [isLoading, setIsLoading] = useState(true);
+  const [documentFiles, setDocumentFiles] = useState<string[]>([]);
+
+  const handleOpenUploader = () => {
+    setUploaderVisible(true);
   };
-  const handleMinimize = () => {
-    if (minimizeRef.current) {
+
+  const handleToggleSidebar = () => {
+    if (toggleButtonRef.current) {
       sidebarRef.current?.classList.toggle("w-1/5");
       sidebarRef.current?.classList.toggle("w-0");
-      minimizeRef.current?.classList.toggle("rotate-180");
-      minimizeRef.current?.classList.toggle("-translate-x-72");
+      toggleButtonRef.current?.classList.toggle("rotate-180");
+      toggleButtonRef.current?.classList.toggle("-translate-x-72");
     }
   };
+
   useEffect(() => {
     const notebookID = window.location.pathname.split("/").pop();
     if (!notebookID) {
       console.error("Notebook ID not found");
       return;
     }
-    setLoading(true);
+
+    setIsLoading(true);
+
     axios
       .get("http://localhost:8000/api/notebook_files", {
         params: { notebookID: notebookID },
       })
       .then((response) => {
         const files = response.data.files;
-        setFiles(files);
-        setLoading(false);
+        setDocumentFiles(files);
+        setIsLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching files:", error);
-        setLoading(false);
+        setIsLoading(false);
       });
   }, [reloadSidebar]);
+
   return (
     <>
       <div
@@ -59,14 +68,14 @@ export default function ChatSidebar(props: {
           <div className="h-8 hover:bg-zinc-800 transition duration-300 ease-in-out rounded-lg cursor-pointer mt-4 w-4/5 flex justify-center items-center">
             <h1
               className="text-white text-lg select-none whitespace-nowrap overflow-ellipsis"
-              onClick={openUploader}
+              onClick={handleOpenUploader}
             >
               Upload documents
             </h1>
             <FaNoteSticky className="text-white text-lg ml-2" />
           </div>
           <div className="w-full mt-8">
-            {loading ? (
+            {isLoading ? (
               <>
                 {Array.from({ length: 5 }).map((_, index) => (
                   <div key={index} className="w-full h-12 mb-2">
@@ -74,10 +83,10 @@ export default function ChatSidebar(props: {
                   </div>
                 ))}
               </>
-            ) : files.length > 0 ? (
-              files.map((file: string, index: number) => (
+            ) : documentFiles.length > 0 ? (
+              documentFiles.map((file: string, index: number) => (
                 <div key={index} className="w-full h-12 mb-2">
-                  <ChatItem filename={String(file)} />
+                  <DocumentItem filename={String(file)} />
                 </div>
               ))
             ) : (
@@ -90,8 +99,8 @@ export default function ChatSidebar(props: {
       </div>
       <div
         className="w-8 h-8 rounded-4xl absolute left-72 top-1/2 z-50 hover:bg-zinc-800 transition-all duration-500 ease-in-out cursor-pointer flex justify-center items-center"
-        ref={minimizeRef}
-        onClick={handleMinimize}
+        ref={toggleButtonRef}
+        onClick={handleToggleSidebar}
       >
         <IoIosArrowBack className="text-white text-xl" />
       </div>

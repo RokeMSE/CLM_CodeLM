@@ -13,7 +13,7 @@ import { FaRegEye } from "react-icons/fa";
 import { FaRegEyeSlash } from "react-icons/fa";
 import { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import axios from "axios";
+import api from "@/lib/axiosInstance";
 
 export function RegisterForm({
   className,
@@ -53,9 +53,10 @@ export function RegisterForm({
       "password",
       password ? password : passwordRef.current?.value.trim() || "",
     );
-    axios
-      .post("http://localhost:8000/register", formData, {
-        withCredentials: true,
+    api
+      .post("/register", {
+        email: email,
+        password: password,
       })
       .then((response) => {
         if (response.status === 200 || response.status === 201) {
