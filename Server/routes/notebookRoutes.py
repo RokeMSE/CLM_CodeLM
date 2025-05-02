@@ -64,7 +64,9 @@ async def create_notebook_route(req: Request, res: Response):
     return {"notebook_id": notebook_id} # this is the response body
 
 @router.post("/upload")
-async def upload_file_route(res: Response, notebookID: str = Form(...), files: List[UploadFile] = File(...)):
+async def upload_file_route(
+    res: Response, notebookID: str = Form(...), files: List[UploadFile] = File(...)
+):
     """
     Upload a file to the notebook.
     """
@@ -78,9 +80,13 @@ async def upload_file_route(res: Response, notebookID: str = Form(...), files: L
         if response is None:
             raise HTTPException(status_code=500, detail="Error uploading file")
         else:
-            insert = await insert_file_metadata(notebookID, unique_filename, file.content_type, file.size, file.filename)
+            insert = await insert_file_metadata(
+                notebookID, unique_filename, file.content_type, file.size, file.filename
+            )
             if insert is None:
-                raise HTTPException(status_code=500, detail="Error inserting file metadata")
+                raise HTTPException(
+                    status_code=500, detail="Error inserting file metadata"
+                )
     # If all files are uploaded successfully, return a success message
     res.status_code = status.HTTP_200_OK
     return {"detail": "Files uploaded successfully"}

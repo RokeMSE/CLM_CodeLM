@@ -1,11 +1,7 @@
 import { FaFilePdf } from "react-icons/fa6";
 import { Checkbox } from "@/components/ui/checkbox";
 
-export default function ChatItem(
-  props:{
-    filename: string;
-  }
-) {
+export default function ChatItem(props: { filename: string }) {
   const { filename } = props;
   return (
     <div className="h-8 shadow-md mb-2 mx-4 rounded-lg cursor-pointer hover:bg-zinc-800 transition duration-300 ease-in-out">

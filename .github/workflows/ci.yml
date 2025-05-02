@@ -31,7 +31,6 @@ jobs:
 
       - name: Run Prettier
         run: prettier --check .
-        continue-on-error: true
 
   check-backend:
     name: Check Backend Code

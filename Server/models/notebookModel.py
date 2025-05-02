@@ -1,9 +1,12 @@
 from http.client import HTTPException
 from pymongo import AsyncMongoClient
 import datetime
+import os
 
-client = AsyncMongoClient("mongodb://localhost:27017")
-db = client["CodeLM"]
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+
+mongo_client = AsyncMongoClient(MONGO_URI)
+db = mongo_client["CodeLM"]
 # each notebook is a collection that holds the user's input and the model's output
 
 
@@ -71,7 +74,14 @@ async def delete_notebook(notebook_id: str):
     await notebook_collection.drop()
     return {"detail": "Notebook deleted"}
 
-async def insert_file_metadata(notebook_id: str, file_name: str, file_type: str, file_size: int, file_original_name: str):
+
+async def insert_file_metadata(
+    notebook_id: str,
+    file_name: str,
+    file_type: str,
+    file_size: int,
+    file_original_name: str,
+):
     """
     Insert file metadata into the notebook.
     """
@@ -89,8 +99,11 @@ async def insert_file_metadata(notebook_id: str, file_name: str, file_type: str,
         })
         return {"detail": "File metadata inserted"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error inserting file metadata: {str(e)}")
-    
+        raise HTTPException(
+            status_code=500, detail=f"Error inserting file metadata: {str(e)}"
+        )
+
+
 async def get_files(notebook_id: str):
     """
     Get all files in the notebook.
