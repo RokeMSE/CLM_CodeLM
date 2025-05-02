@@ -20,13 +20,14 @@ from pydantic import BaseModel, Field  # For request/response validation
 
 from models.notebookModel import (
     create_notebook,
+    delete_file_metadata,
     delete_notebook,
     get_files,
     get_notebook_messages,
     insert_file_metadata,
     insert_message,
 )
-from models.storage import upload
+from models.storage import delete_file, upload
 
 load_dotenv()
 # --- Load Environment Variables ---
@@ -86,12 +87,17 @@ async def upload_file_route(
         file_extension = file.filename.split(".")[-1]
         unique_filename = str(uuid.uuid4()) + "." + file_extension
         # Call the upload function from storage.py
-        response = upload(file_content, unique_filename, "files", notebookID)
+        response = await upload(file_content, unique_filename, "files", notebookID)
         if response is None:
             raise HTTPException(status_code=500, detail="Error uploading file")
         else:
             insert = await insert_file_metadata(
-                notebookID, unique_filename, file.content_type, file.size, file.filename
+                notebookID,
+                unique_filename,
+                file.content_type,
+                file.size,
+                file.filename,
+                response,
             )
             if insert is None:
                 raise HTTPException(
@@ -233,17 +239,43 @@ async def get_files_route(res: Response, notebookID: str = Form(...)):
     """
     Get all files in the notebook.
     """
-    print("Getting all files in the notebook")
-    print("Notebook ID: ", notebookID)
-    # Call the get_file function from notebookModel.py
-    files = await get_files(notebookID)
-    if files is None:
-        return {"detail": "No files found"}
-    files_names = []
-    for file in files:
-        files_names.append(file["file_original_name"])
+    try:
+        print("Getting all files in the notebook")
+        files = await get_files(notebookID)
+        for file in files:
+            # Convert ObjectId to string
+            file["_id"] = str(file["_id"])
+            if "notebook_id" in file:
+                file["notebook_id"] = str(file["notebook_id"])
+            if "created_at" in file:
+                file["created_at"] = str(file["created_at"])
+        res.status_code = status.HTTP_200_OK
+        return {"files": files if files is not None else []}
+    except Exception as e:
+        res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"detail": f"Error fetching files: {str(e)}"}
+
+
+@router.post("/delete-files")
+async def delete_file_route(
+    res: Response, files: List[str] = Form(...), notebookID: str = Form(...)
+):
+    """
+    Delete a file from the notebook.
+    """
+    print("Deleting the file")
+    print(f"Files to delete: {files}")
+    for file_name in files:
+        print(f"Deleting file: {file_name}")
+        print(f"Deleting file from {notebookID}/{file_name}")
+        response = await delete_file(f"{notebookID}/{file_name}", "files")
+        if response is None:
+            raise HTTPException(status_code=500, detail="Error deleting file")
+        response = await delete_file_metadata(file_name, notebookID)
+        if response is None:
+            raise HTTPException(status_code=500, detail="Error deleting file metadata")
     res.status_code = status.HTTP_200_OK
-    return {"files": files_names}
+    return {"detail": "File deleted"}
 
 
 @router.delete("/delete-notebook")

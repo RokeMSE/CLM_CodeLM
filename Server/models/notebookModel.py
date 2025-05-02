@@ -76,6 +76,7 @@ async def insert_file_metadata(
     file_type: str,
     file_size: int,
     file_original_name: str,
+    public_url: str = None,
 ):
     """
     Insert file metadata into the notebook.
@@ -91,13 +92,37 @@ async def insert_file_metadata(
                 "file_size": file_size,
                 "file_original_name": file_original_name,
                 "notebook_id": notebook_id,
-                "created_at": datetime.datetime.utcnow(),
+                "public_url": public_url,
+                "metadata": {
+                    "created_at": datetime.datetime.utcnow(),
+                    "updated_at": datetime.datetime.utcnow(),
+                },
             }
         )
         return {"detail": "File metadata inserted"}
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error inserting file metadata: {str(e)}"
+        )
+
+
+async def delete_file_metadata(file_name: str, notebook_id: str):
+    """
+    Delete file metadata from the notebook.
+    """
+    try:
+        notebook_collection = db["notebook_files"]
+        if notebook_collection is None:
+            raise HTTPException(status_code=404, detail="Notebook not found")
+        result = await notebook_collection.delete_one(
+            {"file_name": file_name, "notebook_id": notebook_id}
+        )
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="File not found")
+        return {"detail": "File metadata deleted"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting file metadata: {str(e)}"
         )
 
 
