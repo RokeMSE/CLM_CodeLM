@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 // --- Interface Definitions ---
 interface Message {
@@ -176,7 +178,6 @@ export default function ChatWindow() {
 							Start the conversation by typing below.
 						</div>
 					)}
-
 					{messages.map((message, index) => (
 						<div
 							key={index}
@@ -193,10 +194,15 @@ export default function ChatWindow() {
 										: "bg-zinc-700"
 								}`}
 							>
-								{message.text}
+								<div className="markdown-content overflow-auto max-w-full">
+									<Markdown remarkPlugins={[remarkGfm]}>
+										{message.text}
+									</Markdown>
+								</div>
 							</div>
 						</div>
 					))}
+
 					{isLoading && (
 						<div className="flex justify-start">
 							<div className="max-w-[70%] h-fit text-white p-3 rounded-xl mb-2 text-pretty whitespace-pre-wrap break-words bg-zinc-700 animate-pulse">
