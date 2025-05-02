@@ -8,6 +8,7 @@ url: str = os.getenv("SUPABASE_URL")
 key: str = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(url, key)
 
+
 def upload(file: bytes, file_name: str, bucket_name: str, notebook_id: str):
     """
     Upload a file to Supabase storage.

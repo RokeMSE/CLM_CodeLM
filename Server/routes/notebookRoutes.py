@@ -1,6 +1,22 @@
-from fastapi import APIRouter, Cookie, Request, Response, status, HTTPException, UploadFile, File, Form, Query
-from pydantic import BaseModel
-from models.notebookModel import create_notebook, insert_file_metadata, get_files, get_notebook_messages, delete_notebook, insert_message
+from fastapi import (
+    APIRouter,
+    Cookie,
+    Request,
+    Response,
+    status,
+    HTTPException,
+    UploadFile,
+    File,
+    Form,
+)
+from models.notebookModel import (
+    create_notebook,
+    insert_file_metadata,
+    get_files,
+    get_notebook_messages,
+    delete_notebook,
+    insert_message,
+)
 from models.storage import upload
 from typing import List
 import logging
@@ -10,6 +26,7 @@ import google.genai as genai
 from google.genai.types import GenerateContentConfig, UserContent, ModelContent, Part
 from dotenv import load_dotenv
 import os
+
 load_dotenv()
 # --- Load Environment Variables ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -32,7 +49,6 @@ else:
         logger.error(f"Error configuring Gemini API: {e}")
 
 
-
 # --- Pydantic Models for Data Validation ---
 class Message(BaseModel):
     role: str  # Keep as str, validation happens later if needed
@@ -41,12 +57,13 @@ class Message(BaseModel):
 
 class ChatRequest(BaseModel):
     user_text: str = Field(..., min_length=1)  # Ensure user_text is not empty
-    history: List[Message] # Expects a list of Message objects
+    history: List[Message]  # Expects a list of Message objects
     notebookID: str = Field(..., min_length=1)  # Ensure notebookID is not empty
 
 
 class ChatResponse(BaseModel):
     reply: str
+
 
 @router.post("/create-notebook")
 async def create_notebook_route(req: Request, res: Response):
@@ -61,7 +78,8 @@ async def create_notebook_route(req: Request, res: Response):
     if response is None:
         raise HTTPException(status_code=500, detail="Error creating notebook")
     res.status_code = status.HTTP_201_CREATED
-    return {"notebook_id": notebook_id} # this is the response body
+    return {"notebook_id": notebook_id}  # this is the response body
+
 
 @router.post("/upload")
 async def upload_file_route(
@@ -90,6 +108,7 @@ async def upload_file_route(
     # If all files are uploaded successfully, return a success message
     res.status_code = status.HTTP_200_OK
     return {"detail": "Files uploaded successfully"}
+
 
 # --- API Endpoint ---
 @router.post("/chat", response_model=ChatResponse)
@@ -215,7 +234,8 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while contacting the AI service: {str(e)}",
         )
-        
+
+
 @router.post("/fetch-messages")
 async def get_messages_route(res: Response, notebookID: str = Form(...)):
     """
@@ -228,6 +248,7 @@ async def get_messages_route(res: Response, notebookID: str = Form(...)):
         return {"detail": "No messages found"}
     res.status_code = status.HTTP_200_OK
     return {"messages": messages}
+
 
 @router.post("/fetch-files")
 async def get_files_route(res: Response, notebookID: str = Form(...)):
@@ -244,6 +265,7 @@ async def get_files_route(res: Response, notebookID: str = Form(...)):
         files_names.append(file["file_original_name"])
     res.status_code = status.HTTP_200_OK
     return {"files": files_names}
+
 
 @router.delete("/delete-notebook")
 async def delete_notebook_route(res: Response, notebookID: str = Form(...)):

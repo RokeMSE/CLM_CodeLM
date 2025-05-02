@@ -29,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+
 # --- Add a root endpoint for basic testing ---
 @app.get("/")
 def read_root():

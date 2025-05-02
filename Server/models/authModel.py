@@ -40,6 +40,7 @@ async def get_user_by_email(email: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching user: {str(e)}")
 
+
 async def get_user_by_id(user_id: str):
     """
     Get a user by ID.
