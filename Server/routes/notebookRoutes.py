@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Request, Response, status, HTTPException, UploadFile, File, Form, Query
+from fastapi import APIRouter, Cookie, Request, Response, status, HTTPException, UploadFile, File, Form, Query
 from pydantic import BaseModel
-from models.notebookModel import create_notebook, insert_file_metadata, get_files
+from models.notebookModel import create_notebook, insert_file_metadata, get_files, get_notebook_messages, delete_notebook, insert_message
 from models.storage import upload
 from typing import List
 import logging
@@ -15,7 +15,38 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 MODEL_NAME = "gemini-2.0-flash"
 
+# ----------- SETTING UP THE API CALLS -----------------
+# --- Configure Logging ---
 router = APIRouter()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+if not GEMINI_API_KEY:
+    logger.error("GEMINI_API_KEY not found in environment variables.")
+    raise ValueError("API Key not configured")
+else:
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        logger.info("Gemini API configured successfully.")
+    except Exception as e:
+        logger.error(f"Error configuring Gemini API: {e}")
+
+
+
+# --- Pydantic Models for Data Validation ---
+class Message(BaseModel):
+    role: str  # Keep as str, validation happens later if needed
+    text: str
+
+
+class ChatRequest(BaseModel):
+    user_text: str = Field(..., min_length=1)  # Ensure user_text is not empty
+    history: List[Message] # Expects a list of Message objects
+    notebookID: str = Field(..., min_length=1)  # Ensure notebookID is not empty
+
+
+class ChatResponse(BaseModel):
+    reply: str
 
 @router.post("/create-notebook")
 async def create_notebook_route(req: Request, res: Response):
@@ -23,7 +54,12 @@ async def create_notebook_route(req: Request, res: Response):
     Create a new notebook.
     """
     print("Creating a new notebook")
+    userID = req.cookies.get("userID")
     notebook_id = str(uuid.uuid4())
+    # Call the create_notebook function from notebookModel.py
+    response = await create_notebook(notebook_id, userID)
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error creating notebook")
     res.status_code = status.HTTP_201_CREATED
     return {"notebook_id": notebook_id} # this is the response body
 
@@ -49,58 +85,9 @@ async def upload_file_route(res: Response, notebookID: str = Form(...), files: L
     res.status_code = status.HTTP_200_OK
     return {"detail": "Files uploaded successfully"}
 
-@router.get("/notebook_files")
-async def get_files_route(res: Response, notebookID: str = Query(...)):
-    """
-    Get all files in the notebook.
-    """
-    print("Getting all files in the notebook")
-    # Call the get_file function from notebookModel.py
-    files = await get_files(notebookID)
-    if files is None:
-        return {"detail": "No files found"}
-    files_names = []
-    for file in files:
-        files_names.append(file["file_original_name"])
-    res.status_code = status.HTTP_200_OK
-    return {"files": files_names}
-
-
-# ----------- SETTING UP THE API CALLS -----------------
-# --- Configure Logging ---
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-if not GEMINI_API_KEY:
-    logger.error("GEMINI_API_KEY not found in environment variables.")
-    raise ValueError("API Key not configured")
-else:
-    try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        logger.info("Gemini API configured successfully.")
-    except Exception as e:
-        logger.error(f"Error configuring Gemini API: {e}")
-
-
-
-# --- Pydantic Models for Data Validation ---
-class Message(BaseModel):
-    role: str  # Keep as str, validation happens later if needed
-    text: str
-
-
-class ChatRequest(BaseModel):
-    user_text: str = Field(..., min_length=1)  # Ensure user_text is not empty
-    history: List[Message]  # Expects a list of Message objects
-
-
-class ChatResponse(BaseModel):
-    reply: str  # MIGHT HAVE TO HANDLE .MD OUTPUT LATER ON
-
-
 # --- API Endpoint ---
 @router.post("/chat", response_model=ChatResponse)
-async def handle_chat(request: ChatRequest):
+async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
     """
     Receives user text and chat history, calls the Gemini API,
     and returns the model's reply.
@@ -178,6 +165,18 @@ async def handle_chat(request: ChatRequest):
             logger.info("Received response from Gemini.")
             # --- Process Response ---
             reply_text = response.text
+            print("User ID: ", user_id)
+            await insert_message(
+                notebook_id=request.notebookID,
+                responder="user",
+                message=request.user_text,
+                user_id=user_id,
+            )
+            await insert_message(
+                notebook_id=request.notebookID,
+                responder=MODEL_NAME,
+                message=reply_text,
+            )
             logger.info(f"Gemini Reply Text: {reply_text}")
             return ChatResponse(reply=reply_text)
 
@@ -210,3 +209,45 @@ async def handle_chat(request: ChatRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while contacting the AI service: {str(e)}",
         )
+        
+@router.post("/fetch-messages")
+async def get_messages_route(res: Response, notebookID: str = Form(...)):
+    """
+    Get all messages in the notebook.
+    """
+    print("Getting all messages in the notebook")
+    # Call the get_file function from notebookModel.py
+    messages = await get_notebook_messages(notebookID)
+    if messages is None:
+        return {"detail": "No messages found"}
+    res.status_code = status.HTTP_200_OK
+    return {"messages": messages}
+
+@router.post("/fetch-files")
+async def get_files_route(res: Response, notebookID: str = Form(...)):
+    """
+    Get all files in the notebook.
+    """
+    print("Getting all files in the notebook")
+    # Call the get_file function from notebookModel.py
+    files = await get_files(notebookID)
+    if files is None:
+        return {"detail": "No files found"}
+    files_names = []
+    for file in files:
+        files_names.append(file["file_original_name"])
+    res.status_code = status.HTTP_200_OK
+    return {"files": files_names}
+
+@router.delete("/delete-notebook")
+async def delete_notebook_route(res: Response, notebookID: str = Form(...)):
+    """
+    Delete a notebook.
+    """
+    print("Deleting the notebook")
+    # Call the delete_notebook function from notebookModel.py
+    response = await delete_notebook(notebookID)
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error deleting notebook")
+    res.status_code = status.HTTP_200_OK
+    return {"detail": "Notebook deleted"}

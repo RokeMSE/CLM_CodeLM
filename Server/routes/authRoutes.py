@@ -152,6 +152,14 @@ async def login_user_route(
             samesite="lax",
             max_age=30 * 24 * 60 * 60,
         )  # 30 days
+        res.set_cookie(
+            key="user_id",
+            value=user_id,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=30 * 24 * 60 * 60,
+        )  # 30 days
         return {"message": "Login successful"}
     except Exception as e:
         res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

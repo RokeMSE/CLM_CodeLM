@@ -13,13 +13,13 @@ async def create_notebook(notebook_id: str, user_id: str):
     """
     try:
         notebook_collection = db[
-            notebook_id
+            "notebooks"
         ]  # Create a new collection for the notebook
         await notebook_collection.insert_one(
             {
                 "metadata": {
                     "notebook_id": notebook_id,
-                    "owner": "user_id",  # Replace with actual user ID
+                    "owner": user_id,  # Replace with actual user ID
                     "created_at": datetime.datetime.utcnow(),
                     "updated_at": datetime.datetime.utcnow(),
                     "number of documents": 0,
@@ -33,14 +33,32 @@ async def create_notebook(notebook_id: str, user_id: str):
         )
 
 
-async def get_notebook(notebook_id: str):  # get messages in the notebook
+async def get_notebook_messages(notebook_id: str):  # get messages in the notebook
     """
     Get a notebook by its ID.
     """
-    notebook_collection = db[notebook_id]
-    if notebook_collection is None:
-        raise HTTPException(status_code=404, detail="Notebook not found")
-    return notebook_collection
+    notebook_collection = db["notebook_messages"]
+    messages = notebook_collection.find(
+        {"notebook_id": notebook_id}
+    ).sort(
+        "metadata.created_at", 1
+    )  # Sort by created_at in ascending order
+    messages = await messages.to_list(length=None)
+    # Convert ObjectId to string
+    for message in messages:
+        message["_id"] = str(message["_id"])
+        if "user_id" in message:
+            message["user_id"] = str(message["user_id"])
+        if "notebook_id" in message:
+            message["notebook_id"] = str(message["notebook_id"])
+        if "metadata" in message:
+            message["metadata"]["created_at"] = str(
+                message["metadata"]["created_at"]
+            )
+            message["metadata"]["updated_at"] = str(
+                message["metadata"]["updated_at"]
+            )
+    return messages
 
 
 async def delete_notebook(notebook_id: str):
@@ -58,7 +76,7 @@ async def insert_file_metadata(notebook_id: str, file_name: str, file_type: str,
     Insert file metadata into the notebook.
     """
     try:
-        notebook_collection = db[notebook_id]
+        notebook_collection = db['notebook_files']
         if notebook_collection is None:
             raise HTTPException(status_code=404, detail="Notebook not found")
         await notebook_collection.insert_one({
@@ -66,6 +84,7 @@ async def insert_file_metadata(notebook_id: str, file_name: str, file_type: str,
             "file_type": file_type,
             "file_size": file_size,
             "file_original_name": file_original_name,
+            "notebook_id": notebook_id,
             "created_at": datetime.datetime.utcnow(),
         })
         return {"detail": "File metadata inserted"}
@@ -77,26 +96,34 @@ async def get_files(notebook_id: str):
     Get all files in the notebook.
     """
     try:
-        notebook_collection = db[notebook_id]
+        notebook_collection = db["notebook_files"]
         if notebook_collection is None:
             raise HTTPException(status_code=404, detail="Notebook not found")
-        files = await notebook_collection.find({"file_name": {"$exists": True}}).to_list(length=None)
+        files = await notebook_collection.find({"notebook_id": notebook_id}).to_list(length=None)
         return files
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching files: {str(e)}")
 
-async def insert_message(notebook_id: str, message: str):
+async def insert_message(notebook_id: str, message: str, responder: str, user_id: str = None):
     """
     Insert a message into the notebook.
     """
     try:
-        notebook_collection = db[notebook_id]
+        notebook_collection = db['notebook_messages']
+        # Check if the notebook collection exists
         if notebook_collection is None:
             raise HTTPException(status_code=404, detail="Notebook not found")
         await notebook_collection.insert_one(
             {
-                "message": message,
-                "created_at": datetime.datetime.utcnow(),
+                "text": message,
+                "by": responder, # user or gemini model
+                "role": "user" if user_id is not None else "model",
+                "notebook_id": notebook_id,
+                "metadata": {
+                    "created_at": datetime.datetime.utcnow(),
+                    "updated_at": datetime.datetime.utcnow(),
+                },
+                "user_id": user_id,  # Replace with actual user ID, if it is gemini model, it will be None
             }
         )
         return {"detail": "Message inserted"}

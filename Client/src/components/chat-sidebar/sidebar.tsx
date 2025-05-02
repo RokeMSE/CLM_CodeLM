@@ -37,8 +37,9 @@ export default function ChatSidebar(props: {
 		setLoading(true);
 		const controller = new AbortController();
 		axios
-			.get("http://localhost:8000/api/notebook_files", {
-				params: { notebookID: notebookID },
+			.post("http://localhost:8000/api/fetch_files", {
+				notebookID: notebookID,
+      
 			})
 			.then((response) => {
 				const files = response.data.files;

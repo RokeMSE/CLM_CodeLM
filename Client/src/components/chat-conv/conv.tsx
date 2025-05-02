@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import toast from "react-hot-toast";
 
 // --- Interface Definitions ---
 interface Message {
@@ -14,6 +15,7 @@ interface Message {
 interface BackendRequestBody {
 	user_text: string;
 	history: Message[]; // Send the simple message history
+	notebookID: string; // Send the notebook ID
 }
 
 // Define the expected structure of the successful response
@@ -31,16 +33,27 @@ async function getBotResponseFromBackend(
 	}/api/chat`; // No idea if this is correct
 
 	console.log(`Calling backend API at: ${backendUrl}`);
-
+	const notebookID = window.location.pathname.split("/").pop();
+	if (!notebookID) {
+		toast.error("Notebook ID not found");
+		throw new Error("Notebook ID not found");
+	}
 	const requestBody: BackendRequestBody = {
 		user_text: userText,
 		history: currentHistory,
+		notebookID: notebookID,
 	};
 
 	try {
 		const response = await axios.post<BackendSuccessResponse>(
 			backendUrl,
-			requestBody
+			requestBody,
+			{
+				headers: {
+					"Content-Type": "application/json",
+				},
+				withCredentials: true, // Include credentials if needed
+			}
 		); // Use axios.post
 
 		if (response.status === 200 && response.data && response.data.reply) {
@@ -114,6 +127,28 @@ export default function ChatWindow() {
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages, scrollToBottom]);
+
+	useEffect(() => {
+		// Get messages
+		const notebookID = window.location.pathname.split("/").pop();
+		if (!notebookID) {
+			toast.error("Notebook ID not found");
+			return;
+		}
+		const formData = new FormData();
+		formData.append("notebookID", notebookID);
+		axios
+			.post("http://localhost:8000/api/fetch-messages", formData)
+			.then((response) => {
+				const initialMessages: Message[] = response.data.messages;
+				console.log("Fetched messages:", initialMessages);
+				setMessages(initialMessages);
+			})
+			.catch((error) => {
+				console.error("Error fetching messages:", error);
+				toast.error("Error fetching messages");
+			});
+	}, []);
 
 	// --- Handle sending a message ---
 	const handleSendMessage = useCallback(
