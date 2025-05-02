@@ -218,7 +218,7 @@ async def check_token_route(
             res.status_code = status.HTTP_401_UNAUTHORIZED
             return {"message": "Invalid token"}
         if (
-            payload.userID is None or get_user_by_id(payload.userID) is None
+            payload.userID is None or await get_user_by_id(payload.userID) is None
         ):  # check if the userID is existing in the database
             res.status_code = status.HTTP_401_UNAUTHORIZED
             return {"message": "User not found"}

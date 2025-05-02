@@ -35,10 +35,11 @@ export default function ChatSidebar(props: {
       return;
     }
     setLoading(true);
-    const controller = new AbortController();
+    const formData = new FormData();
+    formData.append("notebookID", notebookID);
     axios
-      .post("http://localhost:8000/api/fetch_files", {
-        notebookID: notebookID,
+      .post("http://localhost:8000/api/fetch-files", formData, {
+        withCredentials: true,
       })
       .then((response) => {
         const files = response.data.files;
@@ -49,9 +50,6 @@ export default function ChatSidebar(props: {
         console.error("Error fetching files:", error);
         setLoading(false);
       });
-    return () => {
-      controller.abort();
-    };
   }, [reloadSidebar]);
   return (
     <>

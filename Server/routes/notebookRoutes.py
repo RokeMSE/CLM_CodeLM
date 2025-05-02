@@ -234,6 +234,7 @@ async def get_files_route(res: Response, notebookID: str = Form(...)):
     Get all files in the notebook.
     """
     print("Getting all files in the notebook")
+    print("Notebook ID: ", notebookID)
     # Call the get_file function from notebookModel.py
     files = await get_files(notebookID)
     if files is None:
