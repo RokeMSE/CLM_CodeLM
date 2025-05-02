@@ -1,15 +1,17 @@
-from fastapi import APIRouter, Cookie, Response, status, Form
-from fastapi.security import OAuth2PasswordBearer
-from models.authModel import get_user_by_email, get_user_by_id, create_user
+import os
+import time
 import uuid
+from datetime import datetime, timedelta
+
 import jwt
+from dotenv import load_dotenv
+from fastapi import APIRouter, Cookie, Form, Response, status
+from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 from pydantic import BaseModel
-import os
-from datetime import datetime, timedelta
-from dotenv import load_dotenv
-import time
+
+from models.authModel import create_user, get_user_by_email, get_user_by_id
 
 load_dotenv()
 
@@ -148,6 +150,14 @@ async def login_user_route(
         res.set_cookie(
             key="refresh_token",
             value=refresh_tk,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=30 * 24 * 60 * 60,
+        )  # 30 days
+        res.set_cookie(
+            key="user_id",
+            value=user_id,
             httponly=True,
             secure=False,
             samesite="lax",

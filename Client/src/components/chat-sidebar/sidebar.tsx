@@ -14,7 +14,7 @@ export default function ChatSidebar(props: {
   const minimizeRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<string[]>([]);
   const { setShowUploader, reloadSidebar } = props;
   const openUploader = () => {
     setShowUploader(true);
@@ -35,9 +35,10 @@ export default function ChatSidebar(props: {
       return;
     }
     setLoading(true);
+    const controller = new AbortController();
     axios
-      .get("http://localhost:8000/api/notebook_files", {
-        params: { notebookID: notebookID },
+      .post("http://localhost:8000/api/fetch_files", {
+        notebookID: notebookID,
       })
       .then((response) => {
         const files = response.data.files;
@@ -48,6 +49,9 @@ export default function ChatSidebar(props: {
         console.error("Error fetching files:", error);
         setLoading(false);
       });
+    return () => {
+      controller.abort();
+    };
   }, [reloadSidebar]);
   return (
     <>
@@ -92,6 +96,14 @@ export default function ChatSidebar(props: {
         className="w-8 h-8 rounded-4xl absolute left-72 top-1/2 z-50 hover:bg-zinc-800 transition-all duration-500 ease-in-out cursor-pointer flex justify-center items-center"
         ref={minimizeRef}
         onClick={handleMinimize}
+        role="button"
+        aria-label="Toggle Sidebar"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            handleMinimize();
+          }
+        }}
       >
         <IoIosArrowBack className="text-white text-xl" />
       </div>

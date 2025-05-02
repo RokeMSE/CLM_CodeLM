@@ -1,6 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import toast from "react-hot-toast";
 
 // --- Interface Definitions ---
 interface Message {
@@ -12,6 +15,7 @@ interface Message {
 interface BackendRequestBody {
   user_text: string;
   history: Message[]; // Send the simple message history
+  notebookID: string; // Send the notebook ID
 }
 
 // Define the expected structure of the successful response
@@ -29,16 +33,27 @@ async function getBotResponseFromBackend(
   }/api/chat`; // No idea if this is correct
 
   console.log(`Calling backend API at: ${backendUrl}`);
-
+  const notebookID = window.location.pathname.split("/").pop();
+  if (!notebookID) {
+    toast.error("Notebook ID not found");
+    throw new Error("Notebook ID not found");
+  }
   const requestBody: BackendRequestBody = {
     user_text: userText,
     history: currentHistory,
+    notebookID: notebookID,
   };
 
   try {
     const response = await axios.post<BackendSuccessResponse>(
       backendUrl,
       requestBody,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true, // Include credentials if needed
+      },
     ); // Use axios.post
 
     if (response.status === 200 && response.data && response.data.reply) {
@@ -105,6 +120,28 @@ export default function ChatWindow() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  useEffect(() => {
+    // Get messages
+    const notebookID = window.location.pathname.split("/").pop();
+    if (!notebookID) {
+      toast.error("Notebook ID not found");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("notebookID", notebookID);
+    axios
+      .post("http://localhost:8000/api/fetch-messages", formData)
+      .then((response) => {
+        const initialMessages: Message[] = response.data.messages;
+        console.log("Fetched messages:", initialMessages);
+        setMessages(initialMessages);
+      })
+      .catch((error) => {
+        console.error("Error fetching messages:", error);
+        toast.error("Error fetching messages");
+      });
+  }, []);
+
   // --- Handle sending a message ---
   const handleSendMessage = useCallback(
     async (text: string) => {
@@ -147,7 +184,7 @@ export default function ChatWindow() {
         setIsLoading(false);
       }
     },
-    [isLoading, messages, scrollToBottom],
+    [isLoading, messages],
   ); // Add scrollToBottom if needed inside finally/catch
 
   return (
@@ -167,7 +204,6 @@ export default function ChatWindow() {
               Start the conversation by typing below.
             </div>
           )}
-
           {messages.map((message, index) => (
             <div
               key={index}
@@ -180,10 +216,15 @@ export default function ChatWindow() {
                   message.role === "user" ? "bg-blue-700" : "bg-zinc-700"
                 }`}
               >
-                {message.text}
+                <div className="markdown-content overflow-auto max-w-full">
+                  <Markdown remarkPlugins={[remarkGfm]}>
+                    {message.text}
+                  </Markdown>
+                </div>
               </div>
             </div>
           ))}
+
           {isLoading && (
             <div className="flex justify-start">
               <div className="max-w-[70%] h-fit text-white p-3 rounded-xl mb-2 text-pretty whitespace-pre-wrap break-words bg-zinc-700 animate-pulse">
