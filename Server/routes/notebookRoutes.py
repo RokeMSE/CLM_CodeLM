@@ -9,7 +9,7 @@ from fastapi import (
     Form,
     Query,
 )
-from models.notebookModel import insert_file_metadata, get_files
+from models.notebookModel import insert_file_metadata, get_files, create_notebook
 from models.storage import upload
 from typing import List
 import uuid
@@ -25,6 +25,7 @@ async def create_notebook_route(req: Request, res: Response):
     print("Creating a new notebook")
     notebook_id = str(uuid.uuid4())
     res.status_code = status.HTTP_201_CREATED
+    await create_notebook(notebook_id, "0")
     return {"notebook_id": notebook_id}  # this is the response body
 
 

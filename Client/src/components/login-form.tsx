@@ -13,7 +13,7 @@ import { FaRegEye } from "react-icons/fa";
 import { FaRegEyeSlash } from "react-icons/fa";
 import { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import axios from "axios";
+import api from "@/lib/axiosInstance";
 
 export function LoginForm({
   className,
@@ -35,12 +35,10 @@ export function LoginForm({
       toast.error("Please fill in all fields");
       return;
     }
-    const formData = new FormData();
-    formData.append("email", email);
-    formData.append("password", password);
-    axios
-      .post("http://localhost:8000/login", formData, {
-        withCredentials: true,
+    api
+      .post("/login", {
+        email: email,
+        password: password,
       })
       .then((response) => {
         if (response.status === 200) {

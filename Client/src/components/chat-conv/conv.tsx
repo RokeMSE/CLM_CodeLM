@@ -3,15 +3,15 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 
 // --- Interface Definitions ---
-interface Message {
+interface ChatMessage {
   role: "user" | "model";
   text: string;
 }
 
-// Define the expected structure of the request body for your backend
+// Define the expected structure of the request body for the backend
 interface BackendRequestBody {
   user_text: string;
-  history: Message[]; // Send the simple message history
+  history: ChatMessage[]; // Send the message history
 }
 
 // Define the expected structure of the successful response
@@ -20,82 +20,60 @@ interface BackendSuccessResponse {
 }
 
 // --- Function to Call Backend API ---
-async function getBotResponseFromBackend(
+async function fetchBotResponse(
   userText: string,
-  currentHistory: Message[],
+  currentHistory: ChatMessage[],
 ): Promise<string> {
-  const backendUrl = `${
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
-  }/api/chat`; // No idea if this is correct
-
-  console.log(`Calling backend API at: ${backendUrl}`);
-
-  const requestBody: BackendRequestBody = {
-    user_text: userText,
-    history: currentHistory,
-  };
-
   try {
-    const response = await axios.post<BackendSuccessResponse>(
-      backendUrl,
-      requestBody,
-    ); // Use axios.post
+    // Create the request body according to expected format
+    const requestBody: BackendRequestBody = {
+      user_text: userText,
+      history: currentHistory,
+    };
 
-    if (response.status === 200 && response.data && response.data.reply) {
-      console.log("Backend Response Text:", response.data.reply);
-      return response.data.reply;
-    } else {
-      // Handle cases where backend returned success status but invalid data
-      console.error("Invalid response structure from backend:", response.data);
-      throw new Error("Received an invalid response from the server.");
-    }
+    // Make the POST request to your backend API
+    const response = await axios.post<BackendSuccessResponse>(
+      "http://localhost:8000/api/chat",
+      requestBody,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      },
+    );
+
+    // Return the reply text from the successful response
+    return response.data.reply;
   } catch (error) {
-    console.error("Error calling backend API:", error);
-    let errorMessage = "Failed to get response from the bot.";
-    if (axios.isAxiosError(error)) {
-      // Extract more specific error info from Axios error if available
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error("Backend Error Data:", error.response.data);
-        console.error("Backend Error Status:", error.response.status);
-        // Try to use error message from backend response if available
-        errorMessage =
-          error.response.data?.detail ||
-          error.response.data?.error ||
-          `Backend Error: ${error.response.status}`;
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error("No response received from backend:", error.request);
-        errorMessage = "The server did not respond. Please try again later.";
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error("Error during request setup:", error.message);
-        errorMessage = `Request setup error: ${error.message}`;
-      }
-    } else if (error instanceof Error) {
-      errorMessage = error.message;
+    if (axios.isAxiosError(error) && error.response) {
+      // If there's a specific error message from the server, use it
+      throw new Error(
+        error.response.data.error || "Failed to get response from the model",
+      );
     }
-    throw new Error(errorMessage);
+    // Otherwise, throw a generic error
+    throw new Error("Error communicating with the server");
   }
 }
 
 // --- React Component ---
-export default function ChatWindow() {
+export default function ChatConversation() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const chatWindowRef = useRef<HTMLDivElement>(null);
-  const chatBodyRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const scrollToBottom = useCallback(() => {
-    if (chatBodyRef.current) {
-      // Slight delay ensure rendering is complete
+    if (messagesContainerRef.current) {
+      // Slight delay to ensure rendering is complete
       setTimeout(() => {
-        if (chatBodyRef.current) {
-          chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop =
+            messagesContainerRef.current.scrollHeight;
         }
       }, 0);
     }
@@ -111,8 +89,9 @@ export default function ChatWindow() {
       if (!text.trim() || isLoading) return;
       setError(null);
 
-      const userMessage: Message = { role: "user", text };
-      // Important: Send the history *before* adding the latest user message, matching what the previous getBotResponse expected.
+      const userMessage: ChatMessage = { role: "user", text };
+
+      // Important: Send the history before adding the latest user message
       const historyForBackend = [...messages];
 
       setMessages((prevMessages) => [...prevMessages, userMessage]);
@@ -124,12 +103,8 @@ export default function ChatWindow() {
       setIsLoading(true);
 
       try {
-        // --- Call the NEW Backend function ---
-        const replyText = await getBotResponseFromBackend(
-          text,
-          historyForBackend,
-        ); // Pass history
-        const modelMessage: Message = {
+        const replyText = await fetchBotResponse(text, historyForBackend);
+        const modelMessage: ChatMessage = {
           role: "model",
           text: replyText,
         };
@@ -138,36 +113,35 @@ export default function ChatWindow() {
         console.error("Error in handleSendMessage:", err);
         let errorMessage = "Sorry, an error occurred while contacting the bot.";
         if (err instanceof Error) {
-          errorMessage = err.message; // Use the detailed error message from getBotResponseFromBackend
+          errorMessage = err.message;
         }
         setError(errorMessage);
-        // Remove the user's message if the API call fails
-        // setMessages(prev => prev.slice(0, -1));
       } finally {
         setIsLoading(false);
       }
     },
     [isLoading, messages, scrollToBottom],
-  ); // Add scrollToBottom if needed inside finally/catch
+  );
 
   return (
     <>
       <div
         className="w-full h-screen bg-zinc-900 flex flex-col items-center transition-all duration-500 ease-in-out"
-        ref={chatWindowRef}
+        ref={chatContainerRef}
       >
-        {/* Chat Body */}
+        {/* Chat Messages Area */}
         <div
           className="w-full flex-grow bg-zinc-900 rounded-xl flex flex-col overflow-y-auto p-4 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none][scrollbar-width:none]"
-          ref={chatBodyRef}
+          ref={messagesContainerRef}
         >
-          {/* Initial Message Example */}
+          {/* Welcome Message */}
           {messages.length === 0 && !isLoading && (
             <div className="flex justify-center text-gray-400 text-sm">
               Start the conversation by typing below.
             </div>
           )}
 
+          {/* Message Bubbles */}
           {messages.map((message, index) => (
             <div
               key={index}
@@ -184,6 +158,8 @@ export default function ChatWindow() {
               </div>
             </div>
           ))}
+
+          {/* Loading Indicator */}
           {isLoading && (
             <div className="flex justify-start">
               <div className="max-w-[70%] h-fit text-white p-3 rounded-xl mb-2 text-pretty whitespace-pre-wrap break-words bg-zinc-700 animate-pulse">
@@ -191,7 +167,8 @@ export default function ChatWindow() {
               </div>
             </div>
           )}
-          {/* Display Error Message */}
+
+          {/* Error Message */}
           {error && (
             <div className="flex justify-center text-red-500 text-sm p-2">
               Error: {error}
@@ -212,14 +189,19 @@ export default function ChatWindow() {
                 if (e.key === "Enter" && !e.shiftKey && inputRef.current) {
                   e.preventDefault();
                   const inputValue = inputRef.current.value;
-                  handleSendMessage(inputValue);
+                  if (inputValue.trim() !== "") {
+                    handleSendMessage(inputValue);
+                  }
                 }
               }}
             />
             <button
               onClick={() => {
                 if (inputRef.current) {
-                  handleSendMessage(inputRef.current.value);
+                  const inputValue = inputRef.current.value;
+                  if (inputValue.trim() !== "") {
+                    handleSendMessage(inputValue);
+                  }
                 }
               }}
               disabled={isLoading}
