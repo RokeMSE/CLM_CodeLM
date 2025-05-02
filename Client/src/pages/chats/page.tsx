@@ -128,13 +128,16 @@ export default function Chats() {
   async function createNewNotebook() {
     // Logic to create a new notebook
     axios
-      .post("http://localhost:8000/api/create-notebook", {
-      }, {
-        headers: {
-          "Content-Type": "application/json",
+      .post(
+        "http://localhost:8000/api/create-notebook",
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
         },
-        withCredentials: true,
-      })
+      )
       .then((res) => {
         window.location.href = `/chat/${res.data.notebook_id}`;
       })
