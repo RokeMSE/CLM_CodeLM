@@ -217,9 +217,7 @@ export default function ChatWindow() {
                 }`}
               >
                 <div className="markdown-content prose prose-invert max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words">
-                  <Markdown 
-                    remarkPlugins={[remarkGfm]}
-                  >
+                  <Markdown remarkPlugins={[remarkGfm]}>
                     {message.text}
                   </Markdown>
                 </div>
