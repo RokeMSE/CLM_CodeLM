@@ -23,6 +23,7 @@ async def create_notebook(notebook_id: str, user_id: str):
             {
                 "metadata": {
                     "notebook_id": notebook_id,
+                    "name": "New Notebook",  # Hardcoded, user will have to rename it
                     "owner": user_id,  # Replace with actual user ID
                     "created_at": datetime.datetime.utcnow(),
                     "updated_at": datetime.datetime.utcnow(),
@@ -170,4 +171,34 @@ async def insert_message(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error inserting message: {str(e)}"
+        )
+
+
+async def get_notebooks(user_id: str):
+    """
+    Get a notebook by its ID.
+    """
+    try:
+        notebook_collection = db["notebooks"]
+        notebooks = (
+            await notebook_collection.find({"metadata.owner": user_id})
+            .sort("metadata.created_at", -1)
+            .to_list()
+        )  # Sort by created_at in descending order
+        # Convert ObjectId to string
+        for notebook in notebooks:
+            notebook["_id"] = str(notebook["_id"])
+            if "owner" in notebook:
+                notebook["owner"] = str(notebook["owner"])
+            if "metadata" in notebook:
+                notebook["metadata"]["created_at"] = str(
+                    notebook["metadata"]["created_at"]
+                )
+                notebook["metadata"]["updated_at"] = str(
+                    notebook["metadata"]["updated_at"]
+                )
+        return notebooks
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching notebook: {str(e)}"
         )
