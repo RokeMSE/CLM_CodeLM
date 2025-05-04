@@ -64,10 +64,17 @@ async def delete_notebook(notebook_id: str):
     """
     Delete a notebook by its ID.
     """
-    notebook_collection = db[notebook_id]
+    notebook_collection = db["notebooks"]
     if notebook_collection is None:
         raise HTTPException(status_code=404, detail="Notebook not found")
-    await notebook_collection.drop()
+    result = await notebook_collection.delete_one({"metadata.notebook_id": notebook_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Notebook not found")
+    # Delete the messages and files associated with the notebook
+    messages_collection = db["notebook_messages"]
+    await messages_collection.delete_many({"notebook_id": notebook_id})
+    files_collection = db["notebook_files"]
+    await files_collection.delete_many({"notebook_id": notebook_id})
     return {"detail": "Notebook deleted"}
 
 

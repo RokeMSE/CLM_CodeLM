@@ -287,12 +287,12 @@ async def delete_file_route(
     return {"detail": "File deleted"}
 
 
-@router.delete("/delete-notebook")
-async def delete_notebook_route(res: Response, notebookID: str = Form(...)):
+@router.delete("/delete-notebook/{notebookID}")
+async def delete_notebook_route(res: Response, notebookID: str):
     """
     Delete a notebook.
     """
-    print("Deleting the notebook")
+    print("Deleting the notebook with ID:", notebookID)
     # Call the delete_notebook function from notebookModel.py
     response = await delete_notebook(notebookID)
     if response is None:

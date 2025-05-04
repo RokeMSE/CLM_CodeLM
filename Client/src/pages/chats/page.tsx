@@ -3,6 +3,7 @@ import { RiEditBoxLine } from "react-icons/ri";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 function NotebookItem(props: {
   showEditTitle: boolean;
@@ -12,6 +13,7 @@ function NotebookItem(props: {
   createDate: string;
   source: number;
   onClick?: () => void;
+  handleDelete?: () => void;
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -35,17 +37,30 @@ function NotebookItem(props: {
       >
         <div
           className="w-full h-8 text-md bg-zinc-400/40 hover:bg-zinc-400/50 rounded-tl-lg rounded-tr-lg flex items-center justify-center cursor-pointer p-4"
-          onClick={() => props.setShowEditTitle(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            props.setShowEditTitle(true);
+          }}
         >
           Edit title
         </div>
-        <div className="w-full h-8 text-md bg-zinc-400/40 hover:bg-zinc-400/50 rounded-bl-lg rounded-br-lg flex items-center justify-center cursor-pointer p-4">
+        <div
+          className="w-full h-8 text-md bg-zinc-400/40 hover:bg-zinc-400/50 rounded-bl-lg rounded-br-lg flex items-center justify-center cursor-pointer p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            props.handleDelete?.();
+            setShowTooltip(false);
+          }}
+        >
           Delete notebook
         </div>
       </div>
       <div
-        className="h-8 text-lg text-white m-2 rounded-4xl px-2 font-medium bg-zinc-400/40 flex flex-row items-center justify-between cursor-pointer hover:bg-zinc-400/50 transition duration-300 ease-in-out"
-        onClick={() => setShowTooltip(!showTooltip)}
+        className="h-8 text-lg text-white m-2 rounded-4xl px-2 font-medium bg-zinc-400/40 flex flex-row items-center justify-between cursor-pointer hover:bg-zinc-400/50 transition duration-300 ease-in-out select-none"
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowTooltip(!showTooltip);
+        }}
       >
         {props.title}
         <RiEditBoxLine />
@@ -155,7 +170,6 @@ export default function Chats() {
   const [title, setTitle] = useState("Chat title");
   const [notebooks, setNotebooks] = useState<ProcessedNotebook[]>([]);
   async function createNewNotebook() {
-    // Logic to create a new notebook
     axios
       .post(
         "http://localhost:8000/api/create-notebook",
@@ -172,6 +186,19 @@ export default function Chats() {
       })
       .catch((err) => {
         console.log(err);
+      });
+  }
+
+  async function deleteNotebook(notebookID: string) {
+    axios
+      .delete(`http://localhost:8000/api/delete-notebook/${notebookID}`)
+      .then(() => {
+        console.log("Notebook deleted successfully");
+        toast.success("Notebook deleted successfully");
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Error deleting notebook", err.message);
       });
   }
 
@@ -230,6 +257,12 @@ export default function Chats() {
               source={notebook.source || 0}
               onClick={() => {
                 window.location.href = `/chat/${notebook.notebookId}`;
+              }}
+              handleDelete={() => {
+                deleteNotebook(notebook.notebookId!);
+                setNotebooks((prev) =>
+                  prev.filter((n) => n.notebookId !== notebook.notebookId),
+                );
               }}
             />
           ))}
