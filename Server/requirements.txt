@@ -67,6 +67,8 @@ pyflakes==3.3.2
 Pygments==2.19.1
 PyJWT==2.10.1
 pymongo==4.12.0
+PyMuPDF==1.25.5
+pymupdf4llm==0.0.22
 pyparsing==3.2.3
 pytest==8.3.5
 pytest-mock==3.14.0

@@ -15,6 +15,7 @@ function NotebookItem(props: {
   selectedNotebook: string | null;
   setSelectedNotebook: (id: string | null) => void;
   onClick?: () => void;
+  handleDelete?: () => void;
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -62,7 +63,11 @@ function NotebookItem(props: {
         </div>
         <div
           className="w-full h-8 text-md bg-zinc-400/40 hover:bg-zinc-400/50 rounded-bl-lg rounded-br-lg flex items-center justify-center cursor-pointer p-4"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            props.handleDelete?.();
+            setShowTooltip(false);
+          }}
         >
           Delete notebook
         </div>
@@ -209,7 +214,6 @@ export default function Chats() {
   const [notebooks, setNotebooks] = useState<ProcessedNotebook[]>([]);
   const [selectedNotebook, setSelectedNotebook] = useState<string | null>(null);
   async function createNewNotebook() {
-    // Logic to create a new notebook
     axios
       .post(
         "http://localhost:8000/api/create-notebook",
@@ -226,6 +230,19 @@ export default function Chats() {
       })
       .catch((err) => {
         console.log(err);
+      });
+  }
+
+  async function deleteNotebook(notebookID: string) {
+    axios
+      .delete(`http://localhost:8000/api/delete-notebook/${notebookID}`)
+      .then(() => {
+        console.log("Notebook deleted successfully");
+        toast.success("Notebook deleted successfully");
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Error deleting notebook", err.message);
       });
   }
 
@@ -292,6 +309,12 @@ export default function Chats() {
               setSelectedNotebook={setSelectedNotebook}
               onClick={() => {
                 window.location.href = `/chat/${notebook.notebookID}`;
+              }}
+              handleDelete={() => {
+                deleteNotebook(notebook.notebookId!);
+                setNotebooks((prev) =>
+                  prev.filter((n) => n.notebookId !== notebook.notebookId),
+                );
               }}
             />
           ))}
