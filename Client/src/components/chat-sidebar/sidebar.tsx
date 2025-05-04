@@ -92,7 +92,8 @@ export default function ChatSidebar(props: {
         const formData = new FormData();
         formData.append("source", size ? (-size).toString() : "0");
         formData.append("notebookID", notebookID);
-        axios.post("http://localhost:8000/api/update-source", formData)
+        axios
+          .post("http://localhost:8000/api/update-source", formData)
           .then(() => {
             console.log("Source updated successfully");
           })

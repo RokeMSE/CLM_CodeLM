@@ -315,9 +315,12 @@ async def get_notebooks_route(res: Response, user_id: str = Cookie(None)):
     res.status_code = status.HTTP_200_OK
     return {"notebooks": response}
 
+
 @router.post("/update-title")
 async def update_title_route(
-    res: Response, title: str = Form(...), notebookID: str = Form(...), 
+    res: Response,
+    title: str = Form(...),
+    notebookID: str = Form(...),
 ):
     """
     Update the title of a notebook.
@@ -332,9 +335,12 @@ async def update_title_route(
     res.status_code = status.HTTP_200_OK
     return {"detail": "Notebook title updated"}
 
+
 @router.post("/update-source")
 async def update_source_route(
-    res: Response, source: str = Form(...), notebookID: str = Form(...), 
+    res: Response,
+    source: str = Form(...),
+    notebookID: str = Form(...),
 ):
     """
     Update the source of a notebook.

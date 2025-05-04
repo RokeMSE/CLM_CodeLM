@@ -43,7 +43,8 @@ export default function Uploader(props: {
           const form = new FormData();
           form.append("source", size ? size.toString() : "0");
           form.append("notebookID", notebookID);
-          axios.post("http://localhost:8000/api/update-source", form)
+          axios
+            .post("http://localhost:8000/api/update-source", form)
             .then(() => {
               console.log("Source updated successfully");
             })

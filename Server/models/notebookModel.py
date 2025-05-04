@@ -203,6 +203,7 @@ async def get_notebooks(user_id: str):
             status_code=500, detail=f"Error fetching notebook: {str(e)}"
         )
 
+
 async def update_notebook_metadata(
     notebook_id: str,
     title: str = None,
@@ -227,9 +228,9 @@ async def update_notebook_metadata(
             )
             if old_source is None:
                 raise HTTPException(status_code=404, detail="Notebook not found")
-            update_data["metadata.#_of_source"] = int(old_source["metadata"][
-                "#_of_source"
-            ]) + source
+            update_data["metadata.#_of_source"] = (
+                int(old_source["metadata"]["#_of_source"]) + source
+            )
         update_data["metadata.updated_at"] = datetime.datetime.utcnow()
         await notebook_collection.update_one(
             {"metadata.notebook_id": notebook_id},
