@@ -212,11 +212,11 @@ export default function ChatWindow() {
               }`}
             >
               <div
-                className={`max-w-[70%] h-fit text-white p-3 rounded-xl mb-2 text-pretty whitespace-pre-wrap break-words shadow-md ${
+                className={`max-w-[60%] text-white p-3 rounded-xl mb-3 shadow-md ${
                   message.role === "user" ? "bg-blue-700" : "bg-zinc-700"
                 }`}
               >
-                <div className="markdown-content overflow-auto max-w-full">
+                <div className="markdown-content prose prose-invert max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words">
                   <Markdown remarkPlugins={[remarkGfm]}>
                     {message.text}
                   </Markdown>

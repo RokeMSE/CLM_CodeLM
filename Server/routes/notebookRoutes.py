@@ -1,7 +1,6 @@
 import os
 import uuid
 from typing import List
-
 import google.genai as genai
 from dotenv import load_dotenv
 from fastapi import (
@@ -27,12 +26,13 @@ from models.notebookModel import (
     insert_file_metadata,
     insert_message,
 )
-from models.storage import delete_file, upload
+from models.storage import delete_file, read_file, upload
 
 load_dotenv()
 # --- Load Environment Variables ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 MODEL_NAME = "gemini-2.0-flash"
+SYSTEM_INSTRUCTION = os.getenv("SYSTEM_INSTRUCTION")
 
 # ----------- SETTING UP THE API CALLS -----------------
 # --- Configure Logging ---
@@ -127,7 +127,17 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             # Optional: Set the region if needed
             # region="us-central1",
         )
-
+        files = await get_files(request.notebookID)
+        files_content = []
+        for file in files:
+            print(f"Reading file: {file['file_name']}")
+            file_content = await read_file(
+                f"{request.notebookID}/{file['file_name']}", "files", file["file_type"]
+            )
+            if file_content is not None:
+                files_content.append(
+                    {"file_name": file["file_original_name"], "content": file_content}
+                )
         # --- Prepare History for Gemini SDK ---
         # The Python SDK expects history like: [{'role': 'user'/'model', 'parts': [{'text': '...'}]}]
         history_objs = []
@@ -165,6 +175,7 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             top_p=0.9,  # consider the top 90% of the probability distribution when generating text.
             top_k=40,  # consider the top 40 tokens with the highest probabilities when generating text.
             safety_settings=safety_settings,
+            # system_instruction=SYSTEM_INSTRUCTION,
         )
         try:
             # --- Start Chat Session ---
@@ -173,12 +184,12 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
                 history=history_objs,
                 config=generation_config,
             )
-
             # --- Send Message to Gemini ---
-            response = chat_session.send_message(request.user_text)
+            response = chat_session.send_message(
+                request.user_text,
+            )
             # --- Process Response ---
             reply_text = response.text
-            print("User ID: ", user_id)
             await insert_message(
                 notebook_id=request.notebookID,
                 responder="user",
