@@ -9,7 +9,6 @@ from fastapi import (
     File,
     Form,
     HTTPException,
-    Request,
     Response,
     UploadFile,
     status,
@@ -23,6 +22,7 @@ from models.notebookModel import (
     delete_notebook,
     get_files,
     get_notebook_messages,
+    get_notebooks,
     insert_file_metadata,
     insert_message,
 )
@@ -59,15 +59,13 @@ class ChatResponse(BaseModel):
 
 
 @router.post("/create-notebook")
-async def create_notebook_route(req: Request, res: Response):
+async def create_notebook_route(res: Response, user_id: str = Cookie(None)):
     """
     Create a new notebook.
     """
     print("Creating a new notebook")
-    userID = req.cookies.get("userID")
     notebook_id = str(uuid.uuid4())
-    # Call the create_notebook function from notebookModel.py
-    response = await create_notebook(notebook_id, userID)
+    response = await create_notebook(notebook_id, user_id)
     if response is None:
         raise HTTPException(status_code=500, detail="Error creating notebook")
     res.status_code = status.HTTP_201_CREATED
@@ -289,15 +287,29 @@ async def delete_file_route(
     return {"detail": "File deleted"}
 
 
-@router.delete("/delete-notebook")
-async def delete_notebook_route(res: Response, notebookID: str = Form(...)):
+@router.delete("/delete-notebook/{notebookID}")
+async def delete_notebook_route(res: Response, notebookID: str):
     """
     Delete a notebook.
     """
-    print("Deleting the notebook")
+    print("Deleting the notebook with ID:", notebookID)
     # Call the delete_notebook function from notebookModel.py
     response = await delete_notebook(notebookID)
     if response is None:
         raise HTTPException(status_code=500, detail="Error deleting notebook")
     res.status_code = status.HTTP_200_OK
     return {"detail": "Notebook deleted"}
+
+
+@router.get("/get-notebooks")
+async def get_notebooks_route(res: Response, user_id: str = Cookie(None)):
+    """
+    Get all notebooks for a user.
+    """
+    print("Getting all notebooks")
+    # Call the get_notebook function from notebookModel.py
+    response = await get_notebooks(user_id)
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error getting notebooks")
+    res.status_code = status.HTTP_200_OK
+    return {"notebooks": response}
