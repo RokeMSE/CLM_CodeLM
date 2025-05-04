@@ -39,6 +39,22 @@ export default function Uploader(props: {
         .then((response) => {
           console.log("Files uploaded successfully:", response.data);
           toast.success("Files uploaded successfully");
+          const size = files?.length;
+          const form = new FormData();
+          form.append("source", size ? size.toString() : "0");
+          form.append("notebookID", notebookID);
+          axios
+            .post("http://localhost:8000/api/update-source", form)
+            .then(() => {
+              console.log("Source updated successfully");
+            })
+            .catch((error) => {
+              console.error("Error updating source:", error);
+              toast.error("Error updating source");
+            });
+          // Empty the input value to allow re-uploading the same file
+          input.value = "";
+          // Close the uploader
           props.setShowUploader(false);
           props.setReloadSidebar(true);
         })

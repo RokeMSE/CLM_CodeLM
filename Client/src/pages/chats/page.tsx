@@ -6,17 +6,21 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 function NotebookItem(props: {
+  id: string;
   showEditTitle: boolean;
   setShowEditTitle: (showEditTitle: boolean) => void;
   title: string;
-  setTitle: (title: string) => void;
   createDate: string;
   source: number;
+  selectedNotebook: string | null;
+  setSelectedNotebook: (id: string | null) => void;
   onClick?: () => void;
   handleDelete?: () => void;
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (showTooltip) {
       tooltipRef.current?.classList.remove("hidden");
@@ -26,19 +30,32 @@ function NotebookItem(props: {
       tooltipRef.current?.classList.add("hidden");
     }
   }, [showTooltip]);
+
+  const handleContainerClick = (e: React.MouseEvent) => {
+    if (
+      tooltipRef.current?.contains(e.target as Node) ||
+      headerRef.current?.contains(e.target as Node)
+    ) {
+      return;
+    }
+    props.onClick?.();
+  };
+
   return (
     <div
-      className="w-60 h-60 bg-zinc-900 cursor-pointer rounded-lg flex flex-col mt-4 ml-4 relative shadow-md hover:bg-black transition duration-300 ease-in-out justify-between"
-      onClick={props.onClick}
+      className="w-60 h-60 bg-zinc-900 cursor-pointer rounded-lg flex flex-col relative shadow-md hover:bg-black transition duration-300 ease-in-out justify-between"
+      onClick={handleContainerClick}
     >
+      {/* Tooltip */}
       <div
-        className="absolute rounded-lg bg-zinc-600 text-white top-10 -right-20 hidden flex-col items-center mt-2"
+        className="absolute rounded-lg bg-zinc-600 text-white top-10 -right-20 hidden flex-col items-center mt-2 z-50"
         ref={tooltipRef}
       >
         <div
           className="w-full h-8 text-md bg-zinc-400/40 hover:bg-zinc-400/50 rounded-tl-lg rounded-tr-lg flex items-center justify-center cursor-pointer p-4"
           onClick={(e) => {
             e.stopPropagation();
+            props.setSelectedNotebook(props.id);
             props.setShowEditTitle(true);
           }}
         >
@@ -55,8 +72,11 @@ function NotebookItem(props: {
           Delete notebook
         </div>
       </div>
+
+      {/* Header */}
       <div
-        className="h-8 text-lg text-white m-2 rounded-4xl px-2 font-medium bg-zinc-400/40 flex flex-row items-center justify-between cursor-pointer hover:bg-zinc-400/50 transition duration-300 ease-in-out select-none"
+        ref={headerRef}
+        className="h-8 text-lg text-white m-2 rounded-4xl px-2 font-medium bg-zinc-400/40 flex flex-row items-center justify-between cursor-pointer hover:bg-zinc-400/50 transition duration-300 ease-in-out"
         onClick={(e) => {
           e.stopPropagation();
           setShowTooltip(!showTooltip);
@@ -68,7 +88,10 @@ function NotebookItem(props: {
       <div className="flex flex-row items-center justify-evenly mx-4 mb-4">
         <div className="text-white text-md">{props.createDate}</div>
         <div className="w-1 h-1 rounded-4xl bg-white"></div>
-        <div className="text-white text-md">{props.source} source</div>
+        <div className="text-white text-md">
+          {props.source}{" "}
+          {props.source === 1 || props.source === 0 ? "source" : "sources"}
+        </div>
       </div>
     </div>
   );
@@ -77,11 +100,13 @@ function NotebookItem(props: {
 function EditTitle(props: {
   showEditTitle: boolean;
   setShowEditTitle: (showEditTitle: boolean) => void;
-  title: string;
-  setTitle: (title: string) => void;
+  titles: string[];
+  setTitles: React.Dispatch<React.SetStateAction<string[]>>;
+  index?: number;
+  selectedNotebook: string | null;
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const [newTitle, setNewTitle] = useState(props.title);
+  const [newTitle, setNewTitle] = useState(props.titles[props.index || 0]);
   function close() {
     props.setShowEditTitle(false);
   }
@@ -93,8 +118,25 @@ function EditTitle(props: {
   }
 
   function confirmChange(newTitle: string) {
-    props.setTitle(newTitle);
+    props.setTitles((prevTitles) => {
+      const newTitles = [...prevTitles];
+      if (props.index !== undefined) {
+        newTitles[props.index] = newTitle;
+      }
+      return newTitles;
+    });
     props.setShowEditTitle(false);
+    const formData = new FormData();
+    formData.append("title", newTitle);
+    formData.append("notebookID", props.selectedNotebook || "");
+    axios
+      .post(`http://localhost:8000/api/update-title`, formData)
+      .then(() => {
+        toast.success("Notebook title updated successfully");
+      })
+      .catch((err) => {
+        toast.error("Failed to update notebook title", err.message);
+      });
   }
 
   useEffect(() => {
@@ -106,6 +148,7 @@ function EditTitle(props: {
       modalRef.current?.classList.add("hidden");
     }
   }, [props.showEditTitle]);
+
   return (
     <div
       className="w-full h-screen absolute top-0 left-0 bg-zinc-900/80 flex justify-center items-center select-none z-50"
@@ -121,7 +164,7 @@ function EditTitle(props: {
           className="bg-black text-white w-5/6 focus:outline-none focus:border-ring-0 focus-visible:border-ring-0 focus:border-none border-none"
           placeholder="Enter new title"
           type="text"
-          defaultValue={"Chat title"}
+          defaultValue={props.titles[props.index || 0]}
           onChange={(e) => setNewTitle(e.target.value)}
         />
         <div className="flex flex-row w-4/5 h-10 text-white text-md items-center justify-evenly">
@@ -148,16 +191,16 @@ interface RawNotebookData {
   metadata?: {
     notebook_id?: string;
     owner?: string;
-    title?: string;
+    name?: string;
     created_at?: string;
-    source?: number;
+    "#_of_source"?: number;
     updated_at?: string;
   };
 }
 
 interface ProcessedNotebook {
   id: string;
-  notebookId?: string;
+  notebookID?: string;
   owner?: string;
   title: string;
   createdAt?: string;
@@ -167,8 +210,9 @@ interface ProcessedNotebook {
 
 export default function Chats() {
   const [showEditTitle, setShowEditTitle] = useState(false);
-  const [title, setTitle] = useState("Chat title");
+  const [titles, setTitles] = useState<string[]>([]);
   const [notebooks, setNotebooks] = useState<ProcessedNotebook[]>([]);
+  const [selectedNotebook, setSelectedNotebook] = useState<string | null>(null);
   async function createNewNotebook() {
     axios
       .post(
@@ -217,21 +261,27 @@ export default function Chats() {
               : "Unknown Date";
             return {
               id: notebook._id,
-              notebookId: metadata!.notebook_id,
+              notebookID: metadata!.notebook_id,
               owner: metadata!.owner,
-              title: metadata!.title || "Untitled Notebook",
+              title: metadata!.name || "Untitled",
               createdAt: formattedDate,
-              source: metadata!.source || 0,
+              source: metadata!["#_of_source"] || 0,
               updatedAt: metadata!.updated_at,
             };
           },
         );
         setNotebooks(processedNotebooks);
+        setTitles(
+          processedNotebooks.map(
+            (notebook: ProcessedNotebook) => notebook.title,
+          ),
+        );
       })
       .catch((err) => {
-        console.log(err);
+        toast.error("Failed to fetch notebooks", err.message);
       });
   }, []);
+
   return (
     <>
       <div className="bg-black w-full h-screen flex flex-col relative items-center overflow-y-scroll">
@@ -245,18 +295,20 @@ export default function Chats() {
           <IoIosAdd className="text-3xl" />
         </div>
         <div className="w-5/6 h-0.5 bg-zinc-400/50 mt-20"></div>
-        <div className="grid w-5/6 h-auto min-h-[30rem] bg-zinc-800 rounded-xl mt-10 grid-cols-2 gap-4 p-4 shadow-md">
+        <div className="grid w-5/6 bg-zinc-800 rounded-xl mt-10 mb-10 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 shadow-md content-start">
           {notebooks.map((notebook, index) => (
             <NotebookItem
               key={index}
+              id={notebook.notebookID || ""}
               showEditTitle={showEditTitle}
               setShowEditTitle={setShowEditTitle}
-              title={notebook.title || "Untitled Notebook"}
-              setTitle={setTitle}
+              title={titles[index]}
               createDate={notebook.createdAt || "Unknown Date"}
               source={notebook.source || 0}
+              selectedNotebook={selectedNotebook}
+              setSelectedNotebook={setSelectedNotebook}
               onClick={() => {
-                window.location.href = `/chat/${notebook.notebookId}`;
+                window.location.href = `/chat/${notebook.notebookID}`;
               }}
               handleDelete={() => {
                 deleteNotebook(notebook.notebookId!);
@@ -269,9 +321,17 @@ export default function Chats() {
         </div>
         <EditTitle
           showEditTitle={showEditTitle}
+          titles={titles}
+          setTitles={setTitles}
           setShowEditTitle={setShowEditTitle}
-          title={title}
-          setTitle={setTitle}
+          index={
+            selectedNotebook
+              ? notebooks.findIndex(
+                  (notebook) => notebook.notebookID === selectedNotebook,
+                )
+              : undefined
+          }
+          selectedNotebook={selectedNotebook}
         />
       </div>
     </>

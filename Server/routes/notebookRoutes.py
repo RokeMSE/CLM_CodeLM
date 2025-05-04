@@ -25,6 +25,7 @@ from models.notebookModel import (
     get_notebooks,
     insert_file_metadata,
     insert_message,
+    update_notebook_metadata,
 )
 from models.storage import delete_file, read_file, upload
 
@@ -313,3 +314,46 @@ async def get_notebooks_route(res: Response, user_id: str = Cookie(None)):
         raise HTTPException(status_code=500, detail="Error getting notebooks")
     res.status_code = status.HTTP_200_OK
     return {"notebooks": response}
+
+
+@router.post("/update-title")
+async def update_title_route(
+    res: Response,
+    title: str = Form(...),
+    notebookID: str = Form(...),
+):
+    """
+    Update the title of a notebook.
+    """
+    print("Updating the notebook title", notebookID)
+    response = await update_notebook_metadata(
+        notebookID,
+        title,
+    )
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error updating notebook title")
+    res.status_code = status.HTTP_200_OK
+    return {"detail": "Notebook title updated"}
+
+
+@router.post("/update-source")
+async def update_source_route(
+    res: Response,
+    source: str = Form(...),
+    notebookID: str = Form(...),
+):
+    """
+    Update the source of a notebook.
+    """
+    print("Updating the notebook source", notebookID)
+    source = int(source)
+    response = await update_notebook_metadata(
+        notebookID,
+        None,
+        None,
+        source,
+    )
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error updating notebook source")
+    res.status_code = status.HTTP_200_OK
+    return {"detail": "Notebook source updated"}
