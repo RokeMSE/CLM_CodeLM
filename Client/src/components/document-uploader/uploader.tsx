@@ -40,6 +40,7 @@ export default function Uploader(props: {
           console.log("Files uploaded successfully:", response.data);
           toast.success("Files uploaded successfully");
           props.setShowUploader(false);
+          props.setReloadSidebar(true);
         })
         .catch((error) => {
           console.error("Error uploading files:", error);

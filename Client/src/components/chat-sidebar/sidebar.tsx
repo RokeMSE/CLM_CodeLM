@@ -1,9 +1,18 @@
-import ChatItem from "../chat-item/item";
+import SidebarItem from "../sidebar-item/sidebar-item";
 import { FaNoteSticky } from "react-icons/fa6";
 import { IoIosArrowBack } from "react-icons/io";
+import { FaTrash } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import axios from "axios";
+
+export interface FileMetadata {
+  file_name: string;
+  file_original_name: string;
+  file_size: number;
+  file_type: string;
+  public_url: string;
+}
 
 export default function ChatSidebar(props: {
   showUploader: boolean;
@@ -14,11 +23,11 @@ export default function ChatSidebar(props: {
   const minimizeRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
-  const [files, setFiles] = useState<string[]>([]);
-  const { setShowUploader, reloadSidebar } = props;
+  const [files, setFiles] = useState<FileMetadata[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const { setShowUploader, reloadSidebar, setReloadSidebar } = props;
   const openUploader = () => {
     setShowUploader(true);
-    console.log("open uploader");
   };
   const handleMinimize = () => {
     if (minimizeRef.current) {
@@ -35,13 +44,15 @@ export default function ChatSidebar(props: {
       return;
     }
     setLoading(true);
-    const controller = new AbortController();
+    const formData = new FormData();
+    formData.append("notebookID", notebookID);
     axios
-      .post("http://localhost:8000/api/fetch_files", {
-        notebookID: notebookID,
+      .post("http://localhost:8000/api/fetch-files", formData, {
+        withCredentials: true,
       })
       .then((response) => {
         const files = response.data.files;
+        console.log("Fetched files:", files);
         setFiles(files);
         setLoading(false);
       })
@@ -49,10 +60,43 @@ export default function ChatSidebar(props: {
         console.error("Error fetching files:", error);
         setLoading(false);
       });
-    return () => {
-      controller.abort();
-    };
   }, [reloadSidebar]);
+
+  const toggleFileSelection = (filename: string) => {
+    setSelectedFiles((prev) =>
+      prev.includes(filename)
+        ? prev.filter((file) => file !== filename)
+        : [...prev, filename],
+    );
+  };
+
+  const handleDeleteFiles = () => {
+    const notebookID = window.location.pathname.split("/").pop();
+    if (!notebookID) {
+      console.error("Notebook ID not found");
+      return;
+    }
+
+    setLoading(true);
+    const formData = new FormData();
+    selectedFiles.forEach((file) => {
+      formData.append("files", file);
+    });
+    formData.append("notebookID", notebookID);
+    axios
+      .post("http://localhost:8000/api/delete-files", formData)
+      .then(() => {
+        // Reload file list after deletion
+        setSelectedFiles([]);
+        setReloadSidebar(!reloadSidebar);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error deleting files:", error);
+        setLoading(false);
+      });
+  };
+
   return (
     <>
       <div
@@ -69,7 +113,7 @@ export default function ChatSidebar(props: {
             </h1>
             <FaNoteSticky className="text-white text-lg ml-2" />
           </div>
-          <div className="w-full mt-8">
+          <div className="w-full mt-8 pb-16">
             {loading ? (
               <>
                 {Array.from({ length: 5 }).map((_, index) => (
@@ -79,9 +123,14 @@ export default function ChatSidebar(props: {
                 ))}
               </>
             ) : files.length > 0 ? (
-              files.map((file: string, index: number) => (
+              files.map((file: FileMetadata, index: number) => (
                 <div key={index} className="w-full h-12 mb-2">
-                  <ChatItem filename={String(file)} />
+                  <SidebarItem
+                    file={file}
+                    selectedFiles={selectedFiles}
+                    setSelectedFiles={setSelectedFiles}
+                    toggleFileSelection={toggleFileSelection}
+                  />
                 </div>
               ))
             ) : (
@@ -90,6 +139,19 @@ export default function ChatSidebar(props: {
               </div>
             )}
           </div>
+
+          {/* Delete button - only appears when files are selected */}
+          {selectedFiles.length > 0 && (
+            <div className="absolute bottom-4 left-0 right-0 mx-auto w-4/5">
+              <button
+                className="bg-red-600 hover:bg-red-700 text-white w-full py-2 rounded-md flex items-center justify-center font-medium transition-colors duration-200"
+                onClick={handleDeleteFiles}
+              >
+                <FaTrash className="mr-2" />
+                Delete Selected ({selectedFiles.length})
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <div
