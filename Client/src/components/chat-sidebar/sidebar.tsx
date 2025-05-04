@@ -5,6 +5,7 @@ import { FaTrash } from "react-icons/fa";
 import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export interface FileMetadata {
   file_name: string;
@@ -87,12 +88,26 @@ export default function ChatSidebar(props: {
       .post("http://localhost:8000/api/delete-files", formData)
       .then(() => {
         // Reload file list after deletion
+        const size = selectedFiles.length;
+        const formData = new FormData();
+        formData.append("source", size ? (-size).toString() : "0");
+        formData.append("notebookID", notebookID);
+        axios.post("http://localhost:8000/api/update-source", formData)
+          .then(() => {
+            console.log("Source updated successfully");
+          })
+          .catch((error) => {
+            console.error("Error updating source:", error);
+            toast.error("Error updating source");
+          });
+        toast.success("Files deleted successfully");
         setSelectedFiles([]);
         setReloadSidebar(!reloadSidebar);
         setLoading(false);
       })
       .catch((error) => {
         console.error("Error deleting files:", error);
+        toast.error("Error deleting files");
         setLoading(false);
       });
   };

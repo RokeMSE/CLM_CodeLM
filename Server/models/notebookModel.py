@@ -27,7 +27,7 @@ async def create_notebook(notebook_id: str, user_id: str):
                     "owner": user_id,  # Replace with actual user ID
                     "created_at": datetime.datetime.utcnow(),
                     "updated_at": datetime.datetime.utcnow(),
-                    "number of documents": 0,
+                    "#_of_source": 0,
                 },
             }
         )
@@ -201,4 +201,42 @@ async def get_notebooks(user_id: str):
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Error fetching notebook: {str(e)}"
+        )
+
+async def update_notebook_metadata(
+    notebook_id: str,
+    title: str = None,
+    created_at: str = None,
+    source: int = None,
+):
+    """
+    Update the metadata of a notebook.
+    """
+    try:
+        notebook_collection = db["notebooks"]
+        if notebook_collection is None:
+            raise HTTPException(status_code=404, detail="Notebook not found")
+        update_data = {}
+        if title:
+            update_data["metadata.name"] = title
+        if created_at:
+            update_data["metadata.created_at"] = created_at
+        if source:
+            old_source = await notebook_collection.find_one(
+                {"metadata.notebook_id": notebook_id}
+            )
+            if old_source is None:
+                raise HTTPException(status_code=404, detail="Notebook not found")
+            update_data["metadata.#_of_source"] = int(old_source["metadata"][
+                "#_of_source"
+            ]) + source
+        update_data["metadata.updated_at"] = datetime.datetime.utcnow()
+        await notebook_collection.update_one(
+            {"metadata.notebook_id": notebook_id},
+            {"$set": update_data},
+        )
+        return {"detail": "Notebook metadata updated"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error updating notebook metadata: {str(e)}"
         )
