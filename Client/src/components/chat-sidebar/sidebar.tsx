@@ -116,7 +116,7 @@ export default function ChatSidebar(props: {
   return (
     <>
       <div
-        className="bg-black shadow-2xl border-zinc-800 border-r-2 w-1/5 h-screen relative overflow-hidden transition-all duration-500 ease-in-out"
+        className="bg-black shadow-2xl border-zinc-800 border-r-2 w-full h-screen relative overflow-hidden transition-all duration-500 ease-in-out"
         ref={sidebarRef}
       >
         <div className="flex flex-col items-center h-full">

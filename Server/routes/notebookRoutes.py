@@ -22,6 +22,7 @@ from models.notebookModel import (
     delete_notebook,
     get_files,
     get_notebook_messages,
+    get_notebook_metadata,
     get_notebooks,
     insert_file_metadata,
     insert_message,
@@ -357,3 +358,16 @@ async def update_source_route(
         raise HTTPException(status_code=500, detail="Error updating notebook source")
     res.status_code = status.HTTP_200_OK
     return {"detail": "Notebook source updated"}
+
+
+@router.post("/get-notebook-metadata")
+async def get_notebook_metadata_route(res: Response, notebookID: str = Form(...)):
+    """
+    Get the metadata of a notebook.
+    """
+    print("Getting the notebook metadata")
+    metadata = await get_notebook_metadata(notebookID)
+    if metadata is None:
+        return {"detail": "No metadata found"}
+    res.status_code = status.HTTP_200_OK
+    return {"metadata": metadata}

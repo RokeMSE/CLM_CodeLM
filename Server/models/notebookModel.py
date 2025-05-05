@@ -248,3 +248,35 @@ async def update_notebook_metadata(
         raise HTTPException(
             status_code=500, detail=f"Error updating notebook metadata: {str(e)}"
         )
+
+
+async def get_notebook_metadata(notebook_id: str):
+    """
+    Get the metadata of a notebook.
+    """
+    try:
+        notebook_collection = db["notebooks"]
+        if notebook_collection is None:
+            raise HTTPException(status_code=404, detail="Notebook not found")
+        notebook = await notebook_collection.find_one(
+            {"metadata.notebook_id": notebook_id}
+        )
+        # Convert ObjectId to string
+        if notebook is not None:
+            notebook["_id"] = str(notebook["_id"])
+            if "owner" in notebook:
+                notebook["owner"] = str(notebook["owner"])
+            if "metadata" in notebook:
+                notebook["metadata"]["created_at"] = str(
+                    notebook["metadata"]["created_at"]
+                )
+                notebook["metadata"]["updated_at"] = str(
+                    notebook["metadata"]["updated_at"]
+                )
+        if notebook is None:
+            raise HTTPException(status_code=404, detail="Notebook not found")
+        return notebook
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching notebook metadata: {str(e)}"
+        )
