@@ -37,7 +37,7 @@ export default function Chat() {
   const handleGeneratedContent = (
     type: string,
     title: string,
-    content: string,
+    content: string
   ) => {
     setGeneratedContent({ type, title, content });
     setShowGeneratedContentModal(true);
@@ -56,15 +56,23 @@ export default function Chat() {
     );
   }
 
+  const [minimized, setMinimized] = useState(false);
+
   return (
     <>
       <div className="bg-black w-full h-screen flex flex-row relative overflow-hidden">
-        <div className="flex flex-col items-start w-1/5 h-screen justify-center">
-          <ChatTitle
-            initialTitle="Chat Title"
-            logo="/CodeLM.svg"
-            onTitleChange={(title) => console.log("New title:", title)}
-          />
+        <div
+          className={`flex flex-col items-start h-screen justify-center transition-all duration-500 ease-in-out ${
+            minimized ? "w-0" : "w-1/5"
+          }`}
+        >
+          <div className={`w-full ${minimized ? "invisible" : "visible"}`}>
+            <ChatTitle
+              initialTitle="Chat Title"
+              logo="/CodeLM.svg"
+              onTitleChange={(title) => console.log("New title:", title)}
+            />
+          </div>
           <ChatSidebar
             showUploader={showUploader}
             setShowUploader={setShowUploader}
@@ -81,6 +89,8 @@ export default function Chat() {
             notebookId={notebookId}
             onSourceListChange={handleSourceListChange}
             onGeneratedContent={handleGeneratedContent}
+            minimized={minimized}
+            setMinimized={setMinimized}
           />
         </div>
         {showUploader && (
@@ -90,17 +100,22 @@ export default function Chat() {
             setReloadSidebar={setReloadSidebarFlag}
           />
         )}
-
-        {showGeneratedContentModal && generatedContent && (
-          <GeneratedContentModal
-            isOpen={showGeneratedContentModal}
-            onClose={closeGeneratedContentModal}
-            title={generatedContent.title}
-            content={generatedContent.content}
-            notebookId={notebookId}
-            onSourceSaved={handleSourceListChange} // Refresh left sidebar if saved
-          />
-        )}
+        <div
+          className={`transition-all duration-500 ease-in-out ${
+            minimized ? "w-full" : "w-4/5"
+          }`}
+        >
+          {showGeneratedContentModal && generatedContent && (
+            <GeneratedContentModal
+              isOpen={showGeneratedContentModal}
+              onClose={closeGeneratedContentModal}
+              title={generatedContent.title}
+              content={generatedContent.content}
+              notebookId={notebookId}
+              onSourceSaved={handleSourceListChange} // Refresh left sidebar if saved
+            />
+          )}
+        </div>
       </div>
     </>
   );
