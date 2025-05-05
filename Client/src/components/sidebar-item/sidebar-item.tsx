@@ -14,7 +14,6 @@ export default function SidebarItem(props: {
   refreshFiles: () => void;
 }) {
   const { excludedFiles, setExcludedFiles } = props;
-  const filename = props.file.file_original_name;
   const fileID = props.file.file_name;
   const isExcluded = excludedFiles.includes(fileID);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -50,8 +49,11 @@ export default function SidebarItem(props: {
       return;
     }
 
+    // Show loading toast and get its ID to dismiss it later
+    const loadingToast = toast.loading("Removing file...");
+
     const formData = new FormData();
-    formData.append("files", filename);
+    formData.append("files", fileID);
     formData.append("notebookID", notebookID);
 
     axios
@@ -65,15 +67,21 @@ export default function SidebarItem(props: {
         axios
           .post("http://localhost:8000/api/update-source", form)
           .then(() => {
+            // Dismiss loading toast and show success
+            toast.dismiss(loadingToast);
             toast.success("File removed successfully");
             props.refreshFiles();
           })
           .catch((error) => {
+            // Dismiss loading toast and show error
+            toast.dismiss(loadingToast);
             console.error("Error updating source:", error);
             toast.error("Error updating source");
           });
       })
       .catch((error) => {
+        // Dismiss loading toast and show error
+        toast.dismiss(loadingToast);
         console.error("Error removing file:", error);
         toast.error("Error removing file");
       });
