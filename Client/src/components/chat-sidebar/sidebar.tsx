@@ -72,7 +72,7 @@ export default function ChatSidebar(props: {
 
   // Fetch files when component mounts or when reloadSidebar changes
   useEffect(() => {
-    if(reloadSidebar) {
+    if (reloadSidebar) {
       fetchFiles();
       setReloadSidebar(false);
     }
