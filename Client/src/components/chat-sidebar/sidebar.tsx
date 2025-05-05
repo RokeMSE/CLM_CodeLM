@@ -4,6 +4,7 @@ import { IoIosArrowBack } from "react-icons/io";
 import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export interface FileMetadata {
   file_name: string;
@@ -77,6 +78,34 @@ export default function ChatSidebar(props: {
       setReloadSidebar(false);
     }
   }, [reloadSidebar, setReloadSidebar]);
+
+  useEffect(() => {
+    const notebookID = window.location.pathname.split("/").pop();
+    if (!notebookID) {
+      toast.error("Notebook ID not found");
+      console.error("Notebook ID not found");
+      return;
+    }
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("notebookID", notebookID);
+
+    axios
+      .post("http://localhost:8000/api/fetch-files", formData, {
+        withCredentials: true,
+      })
+      .then((response) => {
+        const files = response.data.files;
+        console.log("Fetched files:", files);
+        setFiles(files);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching files:", error);
+        setLoading(false);
+        toast.error("Error fetching files");
+      });
+  }, []);
 
   return (
     <>

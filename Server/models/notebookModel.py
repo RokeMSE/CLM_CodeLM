@@ -280,3 +280,27 @@ async def get_notebook_metadata(notebook_id: str):
         raise HTTPException(
             status_code=500, detail=f"Error fetching notebook metadata: {str(e)}"
         )
+
+
+async def delete_all_file_metadata(notebook_id: str):
+    """
+    Delete all file metadata associated with a notebook.
+    """
+    try:
+        result = await db.files.delete_many({"notebook_id": notebook_id})
+        return result.deleted_count
+    except Exception as e:
+        print(f"Error deleting file metadata for notebook {notebook_id}: {e}")
+        return None
+
+
+async def delete_notebook_messages(notebook_id: str):
+    """
+    Delete all messages associated with a notebook.
+    """
+    try:
+        result = await db.messages.delete_many({"notebook_id": notebook_id})
+        return result.deleted_count
+    except Exception as e:
+        print(f"Error deleting messages for notebook {notebook_id}: {e}")
+        return None
