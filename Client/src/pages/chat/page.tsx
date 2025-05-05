@@ -11,6 +11,7 @@ export default function Chat() {
   const [showUploader, setShowUploader] = useState(false);
 
   const [reloadSidebarFlag, setReloadSidebarFlag] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const { id: notebookIdFromUrl } = useParams<{ id: string }>();
   const [notebookId, setNotebookId] = useState<string | null>(null);
 
@@ -37,7 +38,7 @@ export default function Chat() {
   const handleGeneratedContent = (
     type: string,
     title: string,
-    content: string
+    content: string,
   ) => {
     setGeneratedContent({ type, title, content });
     setShowGeneratedContentModal(true);
@@ -55,8 +56,6 @@ export default function Chat() {
       </div>
     );
   }
-
-  const [minimized, setMinimized] = useState(false);
 
   return (
     <>
@@ -78,21 +77,11 @@ export default function Chat() {
             setShowUploader={setShowUploader}
             reloadSidebar={reloadSidebarFlag}
             setReloadSidebar={setReloadSidebarFlag}
-          />
-        </div>
-
-        <div className="flex-grow h-screen">
-          <Window />
-        </div>
-        <div className="flex-shrink-0 h-screen">
-          <RightSidebar
-            notebookId={notebookId}
-            onSourceListChange={handleSourceListChange}
-            onGeneratedContent={handleGeneratedContent}
             minimized={minimized}
             setMinimized={setMinimized}
           />
         </div>
+
         {showUploader && (
           <Uploader
             showUploader={showUploader}
@@ -100,22 +89,33 @@ export default function Chat() {
             setReloadSidebar={setReloadSidebarFlag}
           />
         )}
+
         <div
           className={`transition-all duration-500 ease-in-out ${
             minimized ? "w-full" : "w-4/5"
           }`}
         >
-          {showGeneratedContentModal && generatedContent && (
-            <GeneratedContentModal
-              isOpen={showGeneratedContentModal}
-              onClose={closeGeneratedContentModal}
-              title={generatedContent.title}
-              content={generatedContent.content}
-              notebookId={notebookId}
-              onSourceSaved={handleSourceListChange} // Refresh left sidebar if saved
-            />
-          )}
+          <Window />
         </div>
+
+        <div className="flex-shrink-0 h-screen">
+          <RightSidebar
+            notebookId={notebookId}
+            onSourceListChange={handleSourceListChange}
+            onGeneratedContent={handleGeneratedContent}
+          />
+        </div>
+
+        {showGeneratedContentModal && generatedContent && (
+          <GeneratedContentModal
+            isOpen={showGeneratedContentModal}
+            onClose={closeGeneratedContentModal}
+            title={generatedContent.title}
+            content={generatedContent.content}
+            notebookId={notebookId}
+            onSourceSaved={handleSourceListChange} // Refresh left sidebar if saved
+          />
+        )}
       </div>
     </>
   );
