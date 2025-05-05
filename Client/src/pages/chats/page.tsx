@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { Pencil, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function NotebookItem(props: {
   id: string;
@@ -17,78 +19,44 @@ function NotebookItem(props: {
   onClick?: () => void;
   handleDelete?: () => void;
 }) {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    props.setSelectedNotebook(props.id);
+    props.setShowEditTitle(true);
+  };
 
-  useEffect(() => {
-    if (showTooltip) {
-      tooltipRef.current?.classList.remove("hidden");
-      tooltipRef.current?.classList.add("flex");
-    } else {
-      tooltipRef.current?.classList.remove("flex");
-      tooltipRef.current?.classList.add("hidden");
-    }
-  }, [showTooltip]);
-
-  const handleContainerClick = (e: React.MouseEvent) => {
-    if (
-      tooltipRef.current?.contains(e.target as Node) ||
-      headerRef.current?.contains(e.target as Node)
-    ) {
-      return;
-    }
-    props.onClick?.();
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    props.handleDelete?.();
   };
 
   return (
     <div
-      className="w-60 h-60 bg-zinc-900 cursor-pointer rounded-lg flex flex-col relative shadow-md hover:bg-black transition duration-300 ease-in-out justify-between"
-      onClick={handleContainerClick}
+      className="group w-60 h-60 cursor-pointer rounded-lg flex flex-col relative shadow-md transition duration-300 ease-in-out justify-between bg-gradient-to-br from-zinc-900 to-zinc-700 hover:from-black hover:to-zinc-800"
+      onClick={props.onClick}
     >
-      {/* Tooltip */}
-      <div
-        className="absolute rounded-lg bg-zinc-600 text-white top-10 -right-20 hidden flex-col items-center mt-2 z-50"
-        ref={tooltipRef}
-      >
-        <div
-          className="w-full h-8 text-md bg-zinc-400/40 hover:bg-zinc-400/50 rounded-tl-lg rounded-tr-lg flex items-center justify-center cursor-pointer p-4"
-          onClick={(e) => {
-            e.stopPropagation();
-            props.setSelectedNotebook(props.id);
-            props.setShowEditTitle(true);
-          }}
-        >
-          Edit title
-        </div>
-        <div
-          className="w-full h-8 text-md bg-zinc-400/40 hover:bg-zinc-400/50 rounded-bl-lg rounded-br-lg flex items-center justify-center cursor-pointer p-4"
-          onClick={(e) => {
-            e.stopPropagation();
-            props.handleDelete?.();
-            setShowTooltip(false);
-          }}
-        >
-          Delete notebook
+      <div className="h-auto text-lg text-white m-2 rounded-lg px-3 py-1.5 font-medium flex flex-row items-center justify-between relative">
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-1">
+          <Pencil
+            className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer hover:text-blue-300"
+            onClick={handleEditClick}
+          />
+          <Trash2
+            className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer hover:text-red-400"
+            onClick={handleDeleteClick}
+          />
         </div>
       </div>
 
-      {/* Header */}
-      <div
-        ref={headerRef}
-        className="h-8 text-lg text-white m-2 rounded-4xl px-2 font-medium bg-zinc-400/40 flex flex-row items-center justify-between cursor-pointer hover:bg-zinc-400/50 transition duration-300 ease-in-out"
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowTooltip(!showTooltip);
-        }}
-      >
-        {props.title}
-        <RiEditBoxLine />
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="text-white text-2xl">{props.title}</div>
       </div>
+
       <div className="flex flex-row items-center justify-evenly mx-4 mb-4">
-        <div className="text-white text-md">{props.createDate}</div>
-        <div className="w-1 h-1 rounded-4xl bg-white"></div>
-        <div className="text-white text-md">
+        <div className="text-white text-sm">{props.createDate}</div>{" "}
+        <div className="w-1 h-1 rounded-full bg-white mx-2"></div>{" "}
+        <div className="text-white text-sm">
+          {" "}
           {props.source}{" "}
           {props.source === 1 || props.source === 0 ? "source" : "sources"}
         </div>
@@ -100,13 +68,23 @@ function NotebookItem(props: {
 function EditTitle(props: {
   showEditTitle: boolean;
   setShowEditTitle: (showEditTitle: boolean) => void;
-  titles: string[];
-  setTitles: React.Dispatch<React.SetStateAction<string[]>>;
-  index?: number;
+  notebooks: ProcessedNotebook[];
+  setNotebooks: React.Dispatch<React.SetStateAction<ProcessedNotebook[]>>;
   selectedNotebook: string | null;
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const [newTitle, setNewTitle] = useState(props.titles[props.index || 0]);
+  const currentNotebook = props.notebooks.find(
+    (nb) => nb.notebookID === props.selectedNotebook
+  );
+  const [newTitle, setNewTitle] = useState(currentNotebook?.title || "");
+
+  useEffect(() => {
+    const currentNb = props.notebooks.find(
+      (nb) => nb.notebookID === props.selectedNotebook
+    );
+    setNewTitle(currentNb?.title || "");
+  }, [props.selectedNotebook, props.notebooks]);
+
   function close() {
     props.setShowEditTitle(false);
   }
@@ -117,25 +95,41 @@ function EditTitle(props: {
     }
   }
 
-  function confirmChange(newTitle: string) {
-    props.setTitles((prevTitles) => {
-      const newTitles = [...prevTitles];
-      if (props.index !== undefined) {
-        newTitles[props.index] = newTitle;
-      }
-      return newTitles;
-    });
+  function confirmChange() {
+    if (!newTitle.trim() || !props.selectedNotebook) {
+      toast.error("Title cannot be empty.");
+      return;
+    }
+
+    const originalTitle = currentNotebook?.title;
+
+    props.setNotebooks((prevNotebooks) =>
+      prevNotebooks.map((nb) =>
+        nb.notebookID === props.selectedNotebook
+          ? { ...nb, title: newTitle }
+          : nb
+      )
+    );
     props.setShowEditTitle(false);
+
     const formData = new FormData();
     formData.append("title", newTitle);
-    formData.append("notebookID", props.selectedNotebook || "");
+    formData.append("notebookID", props.selectedNotebook);
+
     axios
       .post(`http://localhost:8000/api/update-title`, formData)
       .then(() => {
         toast.success("Notebook title updated successfully");
       })
       .catch((err) => {
-        toast.error("Failed to update notebook title", err.message);
+        toast.error(`Failed to update title: ${err.message}`);
+        props.setNotebooks((prevNotebooks) =>
+          prevNotebooks.map((nb) =>
+            nb.notebookID === props.selectedNotebook
+              ? { ...nb, title: originalTitle || "Untitled" }
+              : nb
+          )
+        );
       });
   }
 
@@ -151,35 +145,40 @@ function EditTitle(props: {
 
   return (
     <div
-      className="w-full h-screen absolute top-0 left-0 bg-zinc-900/80 flex justify-center items-center select-none z-50"
+      className="w-full h-screen fixed top-0 left-0 bg-zinc-900/80 justify-center items-center select-none z-50 hidden"
       ref={modalRef}
       onClick={outsideClick}
     >
-      <div className="w-1/4 h-50 bg-zinc-700 flex flex-col rounded-lg items-center justify-around">
-        <div className="w-5/6 h-8 relative p-2 flex flex-row items-center justify-between rounded-lg">
+      <div className="w-11/12 mx-w-md h-auto bg-zinc-700 flex flex-col rounded-lg items-center justify-around p-6 space-y-4">
+        <div className="w-full flex flex-row items-center justify-between">
           <h1 className="text-white text-lg font-bold">Edit notebook title</h1>
-          <RiEditBoxLine className="text-white text-3xl" />
+          <RiEditBoxLine className="text-white text-2xl" />
         </div>
+
         <Input
-          className="bg-black text-white w-5/6 focus:outline-none focus:border-ring-0 focus-visible:border-ring-0 focus:border-none border-none"
+          className="bg-black text-white w-full focus:outline-none focus:border-blue-500 focus-visible:ring-blue-500 focus-visible:ring-2 border-zinc-600"
           placeholder="Enter new title"
           type="text"
-          defaultValue={props.titles[props.index || 0]}
+          value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") confirmChange();
+          }}
         />
-        <div className="flex flex-row w-4/5 h-10 text-white text-md items-center justify-evenly">
-          <div
-            className="px-8 py-2 bg-red-600 rounded-4xl cursor-pointer hover:bg-red-800"
+
+        <div className="flex flex-row w-full h-10 text-white text-md items-center justify-end space-x-3">
+          <button
+            className="px-4 py-2 bg-zinc-600 rounded-md cursor-pointer hover:bg-zinc-500 transition-colors"
             onClick={close}
           >
             Cancel
-          </div>
-          <div
-            className="px-8 py-2 bg-green-600 rounded-4xl cursor-pointer hover:bg-green-800"
-            onClick={() => confirmChange(newTitle)}
+          </button>
+          <button
+            className="px-4 py-2 bg-blue-600 rounded-md cursor-pointer hover:bg-blue-700 transition-colors"
+            onClick={confirmChange}
           >
             Confirm
-          </div>
+          </button>
         </div>
       </div>
     </div>
@@ -210,50 +209,62 @@ interface ProcessedNotebook {
 
 export default function Chats() {
   const [showEditTitle, setShowEditTitle] = useState(false);
-  const [titles, setTitles] = useState<string[]>([]);
   const [notebooks, setNotebooks] = useState<ProcessedNotebook[]>([]);
   const [selectedNotebook, setSelectedNotebook] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
   async function createNewNotebook() {
+    const toastId = toast.loading("Creating new notebook...");
     axios
       .post(
         "http://localhost:8000/api/create-notebook",
         {},
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           withCredentials: true,
-        },
+        }
       )
       .then((res) => {
+        toast.success("Notebook created!", { id: toastId });
         window.location.href = `/chat/${res.data.notebook_id}`;
       })
       .catch((err) => {
-        console.log(err);
+        console.error("Error creating notebook:", err);
+        toast.error(`Failed to create notebook: ${err.message}`, {
+          id: toastId,
+        });
       });
   }
 
-  async function deleteNotebook(notebookID: string) {
+  async function deleteNotebook(notebookID: string | undefined) {
+    if (!notebookID) return;
+
+    const originalNotebooks = notebooks;
+    setNotebooks((prev) => prev.filter((n) => n.notebookID !== notebookID));
+    const toastId = toast.loading("Deleting notebook...");
+
     axios
       .delete(`http://localhost:8000/api/delete-notebook/${notebookID}`)
       .then(() => {
-        console.log("Notebook deleted successfully");
-        toast.success("Notebook deleted successfully");
+        toast.success("Notebook deleted successfully", { id: toastId });
       })
       .catch((err) => {
-        console.log(err);
-        toast.error("Error deleting notebook", err.message);
+        console.error("Error deleting notebook:", err);
+        toast.error(`Error deleting notebook: ${err.message}`, { id: toastId });
+        // Revert UI update on failure
+        setNotebooks(originalNotebooks);
       });
   }
 
   useEffect(() => {
+    setLoading(true); // Start loading
     axios
       .get("http://localhost:8000/api/get-notebooks", {
         withCredentials: true,
       })
       .then((res) => {
-        const notebooks = res.data.notebooks;
-        const processedNotebooks = notebooks.map(
+        const rawNotebooks: RawNotebookData[] = res.data.notebooks || []; // Ensure it's an array
+        const processedNotebooks = rawNotebooks.map(
           (notebook: RawNotebookData) => {
             const metadata = notebook.metadata;
             const formattedDate = metadata?.created_at
@@ -261,79 +272,108 @@ export default function Chats() {
               : "Unknown Date";
             return {
               id: notebook._id,
-              notebookID: metadata!.notebook_id,
-              owner: metadata!.owner,
-              title: metadata!.name || "Untitled",
+              notebookID: metadata?.notebook_id,
+              owner: metadata?.owner,
+              title: metadata?.name || "Untitled",
               createdAt: formattedDate,
-              source: metadata!["#_of_source"] || 0,
-              updatedAt: metadata!.updated_at,
+              source: metadata?.["#_of_source"] || 0,
+              updatedAt: metadata?.updated_at,
             };
-          },
+          }
         );
         setNotebooks(processedNotebooks);
-        setTitles(
-          processedNotebooks.map(
-            (notebook: ProcessedNotebook) => notebook.title,
-          ),
-        );
       })
       .catch((err) => {
-        toast.error("Failed to fetch notebooks", err.message);
+        toast.error(`Failed to fetch notebooks: ${err.message}`);
+        setNotebooks([]);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   }, []);
 
   return (
     <>
-      <div className="bg-black w-full h-screen flex flex-col relative items-center overflow-y-scroll">
-        <h1 className="text-white text-5xl font-bold mt-20">
-          Welcome to Code LLM
-        </h1>
-        <div className="text-white p-4 rounded-2xl w-fit h-8 flex flex-row items-center bg-blue-500 cursor-pointer hover:bg-blue-600 transition duration-300 ease-in-out mt-10">
-          <span className="text-xl" onClick={createNewNotebook}>
-            Create new notebook
-          </span>
-          <IoIosAdd className="text-3xl" />
-        </div>
-        <div className="w-5/6 h-0.5 bg-zinc-400/50 mt-20"></div>
-        <div className="grid w-5/6 bg-zinc-800 rounded-xl mt-10 mb-10 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 shadow-md content-start">
-          {notebooks.map((notebook, index) => (
-            <NotebookItem
-              key={index}
-              id={notebook.notebookID || ""}
-              showEditTitle={showEditTitle}
-              setShowEditTitle={setShowEditTitle}
-              title={titles[index]}
-              createDate={notebook.createdAt || "Unknown Date"}
-              source={notebook.source || 0}
-              selectedNotebook={selectedNotebook}
-              setSelectedNotebook={setSelectedNotebook}
-              onClick={() => {
-                window.location.href = `/chat/${notebook.notebookID}`;
-              }}
-              handleDelete={() => {
-                deleteNotebook(notebook.notebookId!);
-                setNotebooks((prev) =>
-                  prev.filter((n) => n.notebookId !== notebook.notebookId),
-                );
-              }}
-            />
-          ))}
-        </div>
+      {/* Main container with padding and centering */}
+      <div className="bg-black w-full min-h-screen flex flex-col relative items-center overflow-y-auto">
+        {/* Content wrapper with max-width and padding */}
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col items-center container">
+          <h1 className="text-white text-4xl md:text-5xl font-bold text-center">
+            Welcome to CodeLM
+          </h1>
+
+          {/* Create Notebook Button */}
+          <div
+            className="text-white p-4 rounded-lg w-fit h-auto flex flex-row items-center bg-blue-600 cursor-pointer hover:bg-blue-700 transition duration-300 ease-in-out mt-8 shadow-md"
+            onClick={createNewNotebook}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") createNewNotebook();
+            }}
+          >
+            <span className="text-lg mr-2">Create new notebook</span>
+            <IoIosAdd className="text-2xl" />
+          </div>
+
+          {/* Separator */}
+          <div className="w-full h-px bg-zinc-700 mt-12 mb-8"></div>
+
+          {/* Notebooks Grid Area */}
+          <div className="w-full">
+            {/* Loading State */}
+            {loading && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 justify-items-center">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Skeleton key={index} className="w-60 h-60 rounded-lg" />
+                ))}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loading && notebooks.length === 0 && (
+              <div className="text-center text-zinc-400 mt-10 flex flex-col items-center space-y-4">
+                <p className="text-lg">No notebooks found.</p>
+                <p>Create one to get started!</p>
+              </div>
+            )}
+
+            {/* Notebook Grid */}
+            {!loading && notebooks.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-20 justify-items-center">
+                {notebooks.map((notebook) => (
+                  <NotebookItem
+                    key={notebook.id} // Use unique notebook ID as key
+                    id={notebook.notebookID || ""}
+                    showEditTitle={showEditTitle}
+                    setShowEditTitle={setShowEditTitle}
+                    title={notebook.title}
+                    createDate={notebook.createdAt || "Unknown Date"}
+                    source={notebook.source || 0}
+                    selectedNotebook={selectedNotebook}
+                    setSelectedNotebook={setSelectedNotebook}
+                    onClick={() => {
+                      if (notebook.notebookID) {
+                        window.location.href = `/chat/${notebook.notebookID}`;
+                      } else {
+                        toast.error("Cannot open notebook: Missing ID");
+                      }
+                    }}
+                    handleDelete={() => deleteNotebook(notebook.notebookID)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>{" "}
         <EditTitle
           showEditTitle={showEditTitle}
-          titles={titles}
-          setTitles={setTitles}
           setShowEditTitle={setShowEditTitle}
-          index={
-            selectedNotebook
-              ? notebooks.findIndex(
-                  (notebook) => notebook.notebookID === selectedNotebook,
-                )
-              : undefined
-          }
+          notebooks={notebooks}
+          setNotebooks={setNotebooks}
           selectedNotebook={selectedNotebook}
         />
-      </div>
+      </div>{" "}
     </>
   );
 }

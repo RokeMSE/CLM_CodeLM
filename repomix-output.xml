@@ -1,0 +1,3961 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+.github/
+  workflows/
+    ci.yml
+.husky/
+  pre-commit
+Client/
+  .husky/
+    pre-commit
+  public/
+    CodeLM.svg
+    vite.svg
+  src/
+    assets/
+      CodeLM.svg
+      react.svg
+    auth/
+      authentication.tsx
+    components/
+      chat-conv/
+        conv.tsx
+      chat-sidebar/
+        sidebar.tsx
+      document-uploader/
+        uploader.tsx
+      sidebar-item/
+        sidebar-item.tsx
+      ui/
+        button.tsx
+        card.tsx
+        checkbox.tsx
+        input-otp.tsx
+        input.tsx
+        label.tsx
+        skeleton.tsx
+        spinner.tsx
+      login-form.tsx
+      register-form.tsx
+      reset-form.tsx
+    lib/
+      utils.ts
+    pages/
+      chat/
+        page.tsx
+      chats/
+        page.tsx
+      login/
+        page.tsx
+      register/
+        page.tsx
+      reset-password/
+        page.tsx
+    App.css
+    App.tsx
+    index.css
+    main.tsx
+    vite-env.d.ts
+  components.json
+  eslint.config.js
+  index.html
+  package.json
+  tailwind.config.ts
+  tsconfig.app.json
+  tsconfig.json
+  tsconfig.node.json
+  vite.config.ts
+Server/
+  models/
+    authModel.py
+    notebookModel.py
+    storage.py
+  routes/
+    authRoutes.py
+    notebookRoutes.py
+  requirements.txt
+  server.py
+.gitignore
+.pre-commit-config.yaml
+package.json
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Client/src/components/sidebar-item/sidebar-item.tsx">
+import { FaFilePdf } from "react-icons/fa6";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileMetadata } from "../chat-sidebar/sidebar";
+
+export default function SidebarItem(props: {
+  file: FileMetadata;
+  selectedFiles: string[];
+  setSelectedFiles: (selectedFiles: string[]) => void;
+  toggleFileSelection: (filename: string) => void;
+}) {
+  const { selectedFiles, setSelectedFiles, toggleFileSelection } = props;
+  const isSelected = selectedFiles.includes(props.file.file_name);
+  const filename = props.file.file_name;
+  const handleCheckboxChange = () => {
+    if (isSelected) {
+      setSelectedFiles(selectedFiles.filter((file) => file !== filename));
+    } else {
+      setSelectedFiles([...selectedFiles, filename]);
+    }
+  };
+  const handleItemClick = () => {
+    toggleFileSelection(filename);
+  };
+
+  const handleCheckboxClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent the click event from bubbling up to the item
+    handleCheckboxChange();
+  };
+
+  const handleItemKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleItemClick();
+    }
+  };
+
+  const handleCheckboxKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleCheckboxChange();
+    }
+  };
+
+  return (
+    <div
+      className="h-8 shadow-md mb-2 mx-4 rounded-lg cursor-pointer hover:bg-zinc-800 transition duration-300 ease-in-out"
+      onClick={handleItemClick}
+      onKeyDown={handleItemKeyDown}
+    >
+      <div className="flex flex-row items-center h-full">
+        <FaFilePdf className="text-red-600 ml-4" />
+        <h1 className="text-white text-md ml-2 whitespace-nowrap overflow-ellipsis">
+          {props.file.file_original_name}
+        </h1>
+        <Checkbox
+          className="border-white
+          text-white
+          radix-state-checked:bg-white
+          radix-state-checked:border-white
+					ml-auto mr-4"
+          checked={isSelected}
+          onCheckedChange={handleCheckboxChange}
+          onClick={handleCheckboxClick}
+          onKeyDown={handleCheckboxKeyDown}
+          aria-label="Select file"
+        />
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="Client/public/CodeLM.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="500" zoomAndPan="magnify" viewBox="0 0 375 374.999991" height="500" preserveAspectRatio="xMidYMid meet" version="1.0"><defs><g/></defs><rect x="-37.5" width="450" fill="#ffffff" y="-37.499999" height="449.999989" fill-opacity="1"/><rect x="-37.5" width="450" fill="#e4e2dd" y="-37.499999" height="449.999989" fill-opacity="1"/><g fill="#000000" fill-opacity="1"><g transform="translate(48.155098, 209.308612)"><g><path d="M 33.828125 -11.515625 C 35.765625 -11.515625 37.648438 -11.804688 39.484375 -12.390625 C 41.316406 -12.984375 42.660156 -13.550781 43.515625 -14.09375 L 44.796875 -14.984375 L 50.21875 -4.140625 C 50.039062 -4.003906 49.789062 -3.820312 49.46875 -3.59375 C 49.15625 -3.363281 48.421875 -2.941406 47.265625 -2.328125 C 46.117188 -1.722656 44.890625 -1.191406 43.578125 -0.734375 C 42.273438 -0.285156 40.5625 0.113281 38.4375 0.46875 C 36.3125 0.832031 34.117188 1.015625 31.859375 1.015625 C 26.660156 1.015625 21.734375 -0.257812 17.078125 -2.8125 C 12.421875 -5.363281 8.671875 -8.875 5.828125 -13.34375 C 2.984375 -17.820312 1.5625 -22.660156 1.5625 -27.859375 C 1.5625 -31.785156 2.394531 -35.554688 4.0625 -39.171875 C 5.738281 -42.785156 7.960938 -45.878906 10.734375 -48.453125 C 13.515625 -51.035156 16.757812 -53.09375 20.46875 -54.625 C 24.175781 -56.164062 27.972656 -56.9375 31.859375 -56.9375 C 35.472656 -56.9375 38.804688 -56.503906 41.859375 -55.640625 C 44.910156 -54.785156 47.066406 -53.929688 48.328125 -53.078125 L 50.21875 -51.78125 L 44.796875 -40.9375 C 44.484375 -41.207031 44.007812 -41.535156 43.375 -41.921875 C 42.75 -42.304688 41.484375 -42.8125 39.578125 -43.4375 C 37.679688 -44.070312 35.765625 -44.390625 33.828125 -44.390625 C 30.753906 -44.390625 27.992188 -43.894531 25.546875 -42.90625 C 23.109375 -41.914062 21.175781 -40.601562 19.75 -38.96875 C 18.332031 -37.34375 17.25 -35.59375 16.5 -33.71875 C 15.757812 -31.84375 15.390625 -29.9375 15.390625 -28 C 15.390625 -23.75 16.976562 -19.9375 20.15625 -16.5625 C 23.34375 -13.195312 27.898438 -11.515625 33.828125 -11.515625 Z M 33.828125 -11.515625 "/></g></g></g><g fill="#000000" fill-opacity="1"><g transform="translate(99.196892, 209.308612)"><g><path d="M 7.359375 -4.125 C 3.492188 -7.5625 1.5625 -11.96875 1.5625 -17.34375 C 1.5625 -22.726562 3.570312 -27.144531 7.59375 -30.59375 C 11.613281 -34.050781 16.582031 -35.78125 22.5 -35.78125 C 28.332031 -35.78125 33.25 -34.039062 37.25 -30.5625 C 41.25 -27.082031 43.25 -22.675781 43.25 -17.34375 C 43.25 -12.019531 41.289062 -7.628906 37.375 -4.171875 C 33.46875 -0.710938 28.507812 1.015625 22.5 1.015625 C 16.269531 1.015625 11.222656 -0.695312 7.359375 -4.125 Z M 16.640625 -23.234375 C 15.078125 -21.703125 14.296875 -19.738281 14.296875 -17.34375 C 14.296875 -14.957031 15.039062 -13.003906 16.53125 -11.484375 C 18.03125 -9.972656 20 -9.21875 22.4375 -9.21875 C 24.78125 -9.21875 26.707031 -9.984375 28.21875 -11.515625 C 29.738281 -13.054688 30.5 -15.003906 30.5 -17.359375 C 30.5 -19.742188 29.71875 -21.703125 28.15625 -23.234375 C 26.601562 -24.773438 24.695312 -25.546875 22.4375 -25.546875 C 20.132812 -25.546875 18.203125 -24.773438 16.640625 -23.234375 Z M 16.640625 -23.234375 "/></g></g></g><g fill="#000000" fill-opacity="1"><g transform="translate(144.00251, 209.308612)"><g><path d="M 6.4375 -4.296875 C 3.1875 -7.847656 1.5625 -12.195312 1.5625 -17.34375 C 1.5625 -22.5 3.1875 -26.859375 6.4375 -30.421875 C 9.6875 -33.992188 13.820312 -35.78125 18.84375 -35.78125 C 23.445312 -35.78125 27.242188 -34.335938 30.234375 -31.453125 L 30.234375 -58.296875 L 42.234375 -58.296875 L 42.234375 0 L 30.359375 0 L 30.359375 -3.9375 L 30.234375 -3.9375 C 27.242188 -0.632812 23.445312 1.015625 18.84375 1.015625 C 13.820312 1.015625 9.6875 -0.753906 6.4375 -4.296875 Z M 16.640625 -23.234375 C 15.078125 -21.703125 14.296875 -19.738281 14.296875 -17.34375 C 14.296875 -14.957031 15.039062 -13.003906 16.53125 -11.484375 C 18.03125 -9.972656 20 -9.21875 22.4375 -9.21875 C 24.78125 -9.21875 26.707031 -9.984375 28.21875 -11.515625 C 29.738281 -13.054688 30.5 -15.003906 30.5 -17.359375 C 30.5 -19.742188 29.71875 -21.703125 28.15625 -23.234375 C 26.601562 -24.773438 24.695312 -25.546875 22.4375 -25.546875 C 20.132812 -25.546875 18.203125 -24.773438 16.640625 -23.234375 Z M 16.640625 -23.234375 "/></g></g></g><g fill="#000000" fill-opacity="1"><g transform="translate(190.29939, 209.308612)"><g><path d="M 39.25 -15.71875 L 14.03125 -15.71875 C 14.03125 -13.28125 14.820312 -11.472656 16.40625 -10.296875 C 17.988281 -9.128906 19.703125 -8.546875 21.546875 -8.546875 C 23.492188 -8.546875 25.03125 -8.800781 26.15625 -9.3125 C 27.289062 -9.832031 28.582031 -10.863281 30.03125 -12.40625 L 38.703125 -8.0625 C 35.085938 -2.007812 29.078125 1.015625 20.671875 1.015625 C 15.429688 1.015625 10.9375 -0.78125 7.1875 -4.375 C 3.4375 -7.96875 1.5625 -12.289062 1.5625 -17.34375 C 1.5625 -22.40625 3.4375 -26.742188 7.1875 -30.359375 C 10.9375 -33.972656 15.429688 -35.78125 20.671875 -35.78125 C 26.179688 -35.78125 30.664062 -34.1875 34.125 -31 C 37.582031 -27.820312 39.3125 -23.273438 39.3125 -17.359375 C 39.3125 -16.535156 39.289062 -15.988281 39.25 -15.71875 Z M 14.375 -22.375 L 27.59375 -22.375 C 27.320312 -24.175781 26.609375 -25.5625 25.453125 -26.53125 C 24.296875 -27.507812 22.816406 -28 21.015625 -28 C 19.023438 -28 17.441406 -27.476562 16.265625 -26.4375 C 15.085938 -25.394531 14.457031 -24.039062 14.375 -22.375 Z M 14.375 -22.375 "/></g></g></g><g fill="#000000" fill-opacity="1"><g transform="translate(231.173493, 209.308612)"><g><path d="M 16.8125 -55.921875 L 16.8125 -11.1875 L 36.0625 -11.1875 L 36.0625 0 L 4.0625 0 L 4.0625 -55.921875 Z M 16.8125 -55.921875 "/></g></g></g><g fill="#000000" fill-opacity="1"><g transform="translate(269.47179, 209.308612)"><g><path d="M 50.296875 0 L 47.65625 -33.140625 L 47.3125 -33.140625 L 35.859375 -0.34375 L 28.265625 -0.34375 L 16.8125 -33.140625 L 16.46875 -33.140625 L 13.828125 0 L 1.078125 0 L 6.09375 -55.921875 L 19.65625 -55.921875 L 32.0625 -23.65625 L 44.46875 -55.921875 L 58.015625 -55.921875 L 63.03125 0 Z M 50.296875 0 "/></g></g></g><path stroke-linecap="butt" transform="matrix(1.271087, 0, 0, 1.271087, 20.807101, 233.118222)" fill="none" stroke-linejoin="miter" d="M 0.00117403 4.999211 L 84.433064 4.999211 " stroke="#292929" stroke-width="10" stroke-opacity="1" stroke-miterlimit="4"/><path stroke-linecap="butt" transform="matrix(0, 1.271087, -1.271087, 0, 33.51146, 137.204185)" fill="none" stroke-linejoin="miter" d="M -0.000833609 4.999821 L 82.464236 4.999821 " stroke="#292929" stroke-width="10" stroke-opacity="1" stroke-miterlimit="4"/><path stroke-linecap="butt" transform="matrix(-1.271087, 0, 0, -1.271087, 357.94633, 135.833605)" fill="none" stroke-linejoin="miter" d="M 0.000800334 5.001263 L 84.43269 5.001263 " stroke="#292929" stroke-width="10" stroke-opacity="1" stroke-miterlimit="4"/><path stroke-linecap="butt" transform="matrix(0, -1.271087, 1.271087, 0, 345.241945, 231.747626)" fill="none" stroke-linejoin="miter" d="M 0.00120513 5.000216 L 82.463202 5.000216 " stroke="#292929" stroke-width="10" stroke-opacity="1" stroke-miterlimit="4"/></svg>
+</file>
+
+<file path="Client/public/vite.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
+</file>
+
+<file path="Client/src/assets/CodeLM.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="500" zoomAndPan="magnify" viewBox="0 0 375 149.999998" height="200" preserveAspectRatio="xMidYMid meet" version="1.0"><defs><g/></defs><g fill="#e4e2dd" fill-opacity="1"><g transform="translate(59.234673, 100.024802)"><g><path d="M 30.40625 -10.359375 C 32.144531 -10.359375 33.835938 -10.617188 35.484375 -11.140625 C 37.128906 -11.671875 38.335938 -12.179688 39.109375 -12.671875 L 40.265625 -13.46875 L 45.140625 -3.71875 C 44.984375 -3.59375 44.757812 -3.425781 44.46875 -3.21875 C 44.1875 -3.019531 43.523438 -2.644531 42.484375 -2.09375 C 41.453125 -1.550781 40.347656 -1.078125 39.171875 -0.671875 C 37.992188 -0.265625 36.445312 0.0976562 34.53125 0.421875 C 32.625 0.742188 30.660156 0.90625 28.640625 0.90625 C 23.960938 0.90625 19.53125 -0.238281 15.34375 -2.53125 C 11.164062 -4.820312 7.796875 -7.976562 5.234375 -12 C 2.679688 -16.019531 1.40625 -20.363281 1.40625 -25.03125 C 1.40625 -28.570312 2.15625 -31.96875 3.65625 -35.21875 C 5.15625 -38.46875 7.15625 -41.25 9.65625 -43.5625 C 12.15625 -45.875 15.066406 -47.71875 18.390625 -49.09375 C 21.722656 -50.476562 25.140625 -51.171875 28.640625 -51.171875 C 31.878906 -51.171875 34.867188 -50.785156 37.609375 -50.015625 C 40.359375 -49.242188 42.300781 -48.472656 43.4375 -47.703125 L 45.140625 -46.546875 L 40.265625 -36.796875 C 39.984375 -37.035156 39.554688 -37.328125 38.984375 -37.671875 C 38.421875 -38.023438 37.285156 -38.484375 35.578125 -39.046875 C 33.867188 -39.617188 32.144531 -39.90625 30.40625 -39.90625 C 27.632812 -39.90625 25.148438 -39.457031 22.953125 -38.5625 C 20.765625 -37.664062 19.03125 -36.488281 17.75 -35.03125 C 16.476562 -33.570312 15.503906 -32 14.828125 -30.3125 C 14.160156 -28.625 13.828125 -26.90625 13.828125 -25.15625 C 13.828125 -21.34375 15.257812 -17.921875 18.125 -14.890625 C 20.988281 -11.867188 25.082031 -10.359375 30.40625 -10.359375 Z M 30.40625 -10.359375 "/></g></g></g><g fill="#e4e2dd" fill-opacity="1"><g transform="translate(105.101334, 100.024802)"><g><path d="M 6.609375 -3.71875 C 3.140625 -6.800781 1.40625 -10.757812 1.40625 -15.59375 C 1.40625 -20.425781 3.210938 -24.394531 6.828125 -27.5 C 10.441406 -30.613281 14.90625 -32.171875 20.21875 -32.171875 C 25.457031 -32.171875 29.875 -30.601562 33.46875 -27.46875 C 37.070312 -24.34375 38.875 -20.382812 38.875 -15.59375 C 38.875 -10.800781 37.113281 -6.851562 33.59375 -3.75 C 30.082031 -0.644531 25.625 0.90625 20.21875 0.90625 C 14.613281 0.90625 10.078125 -0.632812 6.609375 -3.71875 Z M 14.953125 -20.890625 C 13.554688 -19.515625 12.859375 -17.75 12.859375 -15.59375 C 12.859375 -13.4375 13.523438 -11.675781 14.859375 -10.3125 C 16.203125 -8.957031 17.972656 -8.28125 20.171875 -8.28125 C 22.273438 -8.28125 24.007812 -8.96875 25.375 -10.34375 C 26.738281 -11.726562 27.421875 -13.476562 27.421875 -15.59375 C 27.421875 -17.75 26.71875 -19.515625 25.3125 -20.890625 C 23.914062 -22.273438 22.203125 -22.96875 20.171875 -22.96875 C 18.097656 -22.96875 16.359375 -22.273438 14.953125 -20.890625 Z M 14.953125 -20.890625 "/></g></g></g><g fill="#e4e2dd" fill-opacity="1"><g transform="translate(145.364105, 100.024802)"><g><path d="M 5.78125 -3.875 C 2.863281 -7.0625 1.40625 -10.96875 1.40625 -15.59375 C 1.40625 -20.226562 2.863281 -24.148438 5.78125 -27.359375 C 8.707031 -30.566406 12.425781 -32.171875 16.9375 -32.171875 C 21.082031 -32.171875 24.492188 -30.867188 27.171875 -28.265625 L 27.171875 -52.390625 L 37.953125 -52.390625 L 37.953125 0 L 27.296875 0 L 27.296875 -3.53125 L 27.171875 -3.53125 C 24.492188 -0.570312 21.082031 0.90625 16.9375 0.90625 C 12.425781 0.90625 8.707031 -0.6875 5.78125 -3.875 Z M 14.953125 -20.890625 C 13.554688 -19.515625 12.859375 -17.75 12.859375 -15.59375 C 12.859375 -13.4375 13.523438 -11.675781 14.859375 -10.3125 C 16.203125 -8.957031 17.972656 -8.28125 20.171875 -8.28125 C 22.273438 -8.28125 24.007812 -8.96875 25.375 -10.34375 C 26.738281 -11.726562 27.421875 -13.476562 27.421875 -15.59375 C 27.421875 -17.75 26.71875 -19.515625 25.3125 -20.890625 C 23.914062 -22.273438 22.203125 -22.96875 20.171875 -22.96875 C 18.097656 -22.96875 16.359375 -22.273438 14.953125 -20.890625 Z M 14.953125 -20.890625 "/></g></g></g><g fill="#e4e2dd" fill-opacity="1"><g transform="translate(186.96694, 100.024802)"><g><path d="M 35.28125 -14.140625 L 12.609375 -14.140625 C 12.609375 -11.941406 13.316406 -10.3125 14.734375 -9.25 C 16.160156 -8.195312 17.707031 -7.671875 19.375 -7.671875 C 21.125 -7.671875 22.503906 -7.90625 23.515625 -8.375 C 24.523438 -8.84375 25.679688 -9.769531 26.984375 -11.15625 L 34.78125 -7.25 C 31.53125 -1.8125 26.128906 0.90625 18.578125 0.90625 C 13.867188 0.90625 9.828125 -0.703125 6.453125 -3.921875 C 3.085938 -7.148438 1.40625 -11.039062 1.40625 -15.59375 C 1.40625 -20.144531 3.085938 -24.046875 6.453125 -27.296875 C 9.828125 -30.546875 13.867188 -32.171875 18.578125 -32.171875 C 23.535156 -32.171875 27.566406 -30.738281 30.671875 -27.875 C 33.773438 -25.007812 35.328125 -20.914062 35.328125 -15.59375 C 35.328125 -14.863281 35.3125 -14.378906 35.28125 -14.140625 Z M 12.921875 -20.109375 L 24.796875 -20.109375 C 24.546875 -21.734375 23.90625 -22.976562 22.875 -23.84375 C 21.84375 -24.71875 20.515625 -25.15625 18.890625 -25.15625 C 17.097656 -25.15625 15.671875 -24.6875 14.609375 -23.75 C 13.554688 -22.820312 12.992188 -21.609375 12.921875 -20.109375 Z M 12.921875 -20.109375 "/></g></g></g><g fill="#e4e2dd" fill-opacity="1"><g transform="translate(223.696813, 100.024802)"><g><path d="M 15.109375 -50.265625 L 15.109375 -10.046875 L 32.40625 -10.046875 L 32.40625 0 L 3.65625 0 L 3.65625 -50.265625 Z M 15.109375 -50.265625 "/></g></g></g><g fill="#e4e2dd" fill-opacity="1"><g transform="translate(258.112041, 100.024802)"><g><path d="M 45.203125 0 L 42.828125 -29.796875 L 42.53125 -29.796875 L 32.234375 -0.296875 L 25.40625 -0.296875 L 15.109375 -29.796875 L 14.796875 -29.796875 L 12.421875 0 L 0.96875 0 L 5.484375 -50.265625 L 17.671875 -50.265625 L 28.8125 -21.265625 L 39.96875 -50.265625 L 52.15625 -50.265625 L 56.65625 0 Z M 45.203125 0 "/></g></g></g><path stroke-linecap="butt" transform="matrix(1.142212, 0, 0, 1.142212, 26.502306, 121.420344)" fill="none" stroke-linejoin="miter" d="M 0.00140068 5.001235 L 84.431894 5.001235 " stroke="#e4e2dd" stroke-width="10" stroke-opacity="1" stroke-miterlimit="4"/><path stroke-linecap="butt" transform="matrix(0, 1.142212, -1.142212, 0, 37.918573, 35.231056)" fill="none" stroke-linejoin="miter" d="M -0.000513946 5.000423 L 82.463537 5.000423 " stroke="#e4e2dd" stroke-width="10" stroke-opacity="1" stroke-miterlimit="4"/><path stroke-linecap="butt" transform="matrix(-1.142212, 0, 0, -1.142212, 347.687328, 28.579635)" fill="none" stroke-linejoin="miter" d="M -0.000150897 5.001216 L 84.433763 5.001216 " stroke="#e4e2dd" stroke-width="10" stroke-opacity="1" stroke-miterlimit="4"/><path stroke-linecap="butt" transform="matrix(0, -1.142212, 1.142212, 0, 336.272182, 114.768936)" fill="none" stroke-linejoin="miter" d="M -0.000521046 5.000993 L 82.46353 5.000993 " stroke="#e4e2dd" stroke-width="10" stroke-opacity="1" stroke-miterlimit="4"/></svg>
+</file>
+
+<file path="Client/src/assets/react.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
+</file>
+
+<file path="Client/src/vite-env.d.ts">
+/// <reference types="vite/client" />
+</file>
+
+<file path="Client/tsconfig.node.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
+
+<file path=".pre-commit-config.yaml">
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Find the latest tag on GitHub and use that
+    rev: v0.11.7 # Example tag, check for the latest version
+    hooks:
+      - id: ruff # Linter
+        # args: [--fix] # Apply fixes automatically
+        # Optionally specify types or directories if needed, e.g.:
+        types_or: [python, pyi]
+        files: ^Server/
+      - id: ruff-format # Formatter
+        # Optionally specify types or directories if needed, e.g.:
+        types_or: [python, pyi]
+        files: ^Server/
+</file>
+
+<file path=".github/workflows/ci.yml">
+name: Code Quality Checks
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  check-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Client
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: Client/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: npm ci && npm install -g prettier
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Prettier
+        run: prettier --check .
+
+  check-backend:
+    name: Check Backend Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: Server/requirements.txt
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Server/requirements.txt
+
+      - name: Run pre-commit checks (Ruff Lint & Format)
+        run: pre-commit run --all-files
+</file>
+
+<file path=".husky/pre-commit">
+echo "Running frontend checks..."
+cd Client
+npm run format && npm run lint
+frontend_exit_code=$?
+cd .. 
+
+if [ $frontend_exit_code -ne 0 ]; then
+  echo "Frontend checks failed!"
+  exit $frontend_exit_code
+fi
+echo "Frontend checks passed."
+
+
+
+VENV_ACTIVATE="./Server/.venv/bin/activate"
+
+if [ -f "$VENV_ACTIVATE" ]; then
+  echo "Activating Python virtual environment: $VENV_ACTIVATE"
+  . "$VENV_ACTIVATE" 
+else
+  echo "Warning: Python virtual environment activation script not found at $VENV_ACTIVATE."
+  echo "Python checks might fail if pre-commit is not globally available or dependencies are missing."
+fi
+
+echo "Running Python checks..."
+pre-commit run --all-files
+python_exit_code=$?
+
+if [ $python_exit_code -ne 0 ]; then
+  echo "Python checks failed!"
+  exit $python_exit_code
+fi
+echo "Python checks passed."
+
+echo "All pre-commit checks passed."
+exit 0
+</file>
+
+<file path="Client/src/auth/authentication.tsx">
+import { useState, useEffect } from "react";
+import { Navigate, Outlet, useLocation } from "react-router";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import { Spinner } from "@/components/ui/spinner";
+
+export default function RequireAuth() {
+  const [isAuthenticated, setIsAuthenticated] = useState("pending"); // "pending" | "true" | "false"
+  const location = useLocation();
+
+  useEffect(() => {
+    axios
+      .post(
+        "http://localhost:8000/check_token",
+        {},
+        {
+          withCredentials: true,
+        },
+      )
+      .then((response) => {
+        if (response.status === 200) {
+          setIsAuthenticated("true");
+          toast.success("Session is valid", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        } else {
+          setIsAuthenticated("false");
+          toast.error("Session expired. Please log in again.", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        }
+      })
+      .catch(() => {
+        setIsAuthenticated("false");
+        toast.error("Session expired. Please log in again.", {
+          duration: 2000,
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        });
+      });
+  }, []);
+
+  if (isAuthenticated === "false") {
+    return <Navigate to="/login" state={{ from: location }} />;
+  } else if (isAuthenticated === "pending") {
+    return (
+      <div className="w-full h-screen bg-zinc-900 flex items-center justify-center">
+        <Spinner size={"large"} />
+      </div>
+    );
+  }
+  return <Outlet />;
+}
+
+export function PublicAuth() {
+  // check auth in login and register and reset
+  const [isAuthenticated, setIsAuthenticated] = useState("pending"); // "pending" | "true" | "false"
+  const location = useLocation();
+
+  useEffect(() => {
+    axios
+      .post(
+        "http://localhost:8000/check_token",
+        {},
+        {
+          withCredentials: true,
+        },
+      )
+      .then((response) => {
+        if (response.status === 200) {
+          setIsAuthenticated("true");
+          toast.success("Session is valid", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        } else {
+          setIsAuthenticated("false");
+          toast.error("Session expired. Please log in again.", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        }
+      })
+      .catch(() => {
+        setIsAuthenticated("false");
+        toast.error("Session expired. Please log in again.", {
+          duration: 2000,
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        });
+      });
+  }, []);
+
+  if (isAuthenticated === "true") {
+    return <Navigate to="/chats" state={{ from: location }} />;
+  } else if (isAuthenticated === "pending") {
+    return (
+      <div className="w-full h-screen bg-zinc-900 flex items-center justify-center">
+        <Spinner size={"large"} />
+      </div>
+    );
+  }
+  // If the user is not authenticated, render the child components
+  return <Outlet />;
+}
+</file>
+
+<file path="Client/src/components/ui/button.tsx">
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  {
+    variants: {
+      variant: {
+        default:
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+        outline:
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        icon: "size-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  ...props
+}: React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+  }) {
+  const Comp = asChild ? Slot : "button";
+
+  return (
+    <Comp
+      data-slot="button"
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    />
+  );
+}
+
+export { Button, buttonVariants };
+</file>
+
+<file path="Client/src/components/ui/card.tsx">
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+function Card({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card"
+      className={cn(
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-header"
+      className={cn(
+        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn("leading-none font-semibold", className)}
+      {...props}
+    />
+  );
+}
+
+function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  );
+}
+
+function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-action"
+      className={cn(
+        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content"
+      className={cn("px-6", className)}
+      {...props}
+    />
+  );
+}
+
+function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
+      {...props}
+    />
+  );
+}
+
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+};
+</file>
+
+<file path="Client/src/components/ui/checkbox.tsx">
+import * as React from "react";
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
+import { CheckIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+function Checkbox({
+  className,
+  ...props
+}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+  return (
+    <CheckboxPrimitive.Root
+      data-slot="checkbox"
+      className={cn(
+        "peer border-input dark:bg-input/30 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:data-[state=checked]:bg-primary data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    >
+      <CheckboxPrimitive.Indicator
+        data-slot="checkbox-indicator"
+        className="flex items-center justify-center text-current transition-none"
+      >
+        <CheckIcon className="size-3.5" />
+      </CheckboxPrimitive.Indicator>
+    </CheckboxPrimitive.Root>
+  );
+}
+
+export { Checkbox };
+</file>
+
+<file path="Client/src/components/ui/input-otp.tsx">
+import * as React from "react";
+import { OTPInput, OTPInputContext } from "input-otp";
+import { MinusIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+function InputOTP({
+  className,
+  containerClassName,
+  ...props
+}: React.ComponentProps<typeof OTPInput> & {
+  containerClassName?: string;
+}) {
+  return (
+    <OTPInput
+      data-slot="input-otp"
+      containerClassName={cn(
+        "flex items-center gap-2 has-disabled:opacity-50",
+        containerClassName,
+      )}
+      className={cn("disabled:cursor-not-allowed", className)}
+      {...props}
+    />
+  );
+}
+
+function InputOTPGroup({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="input-otp-group"
+      className={cn("flex items-center", className)}
+      {...props}
+    />
+  );
+}
+
+function InputOTPSlot({
+  index,
+  className,
+  ...props
+}: React.ComponentProps<"div"> & {
+  index: number;
+}) {
+  const inputOTPContext = React.useContext(OTPInputContext);
+  const { char, hasFakeCaret, isActive } = inputOTPContext?.slots[index] ?? {};
+
+  return (
+    <div
+      data-slot="input-otp-slot"
+      data-active={isActive}
+      className={cn(
+        "data-[active=true]:border-ring data-[active=true]:ring-ring/50 data-[active=true]:aria-invalid:ring-destructive/20 dark:data-[active=true]:aria-invalid:ring-destructive/40 aria-invalid:border-destructive data-[active=true]:aria-invalid:border-destructive dark:bg-input/30 border-input relative flex h-9 w-9 items-center justify-center border-y border-r text-sm shadow-xs transition-all outline-none first:rounded-l-md first:border-l last:rounded-r-md data-[active=true]:z-10 data-[active=true]:ring-[3px]",
+        className,
+      )}
+      {...props}
+    >
+      {char}
+      {hasFakeCaret && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="animate-caret-blink bg-foreground h-4 w-px duration-1000" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InputOTPSeparator({ ...props }: React.ComponentProps<"div">) {
+  return (
+    <div data-slot="input-otp-separator" role="separator" {...props}>
+      <MinusIcon />
+    </div>
+  );
+}
+
+export { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator };
+</file>
+
+<file path="Client/src/components/ui/input.tsx">
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export { Input };
+</file>
+
+<file path="Client/src/components/ui/label.tsx">
+import * as React from "react";
+import * as LabelPrimitive from "@radix-ui/react-label";
+
+import { cn } from "@/lib/utils";
+
+function Label({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+  return (
+    <LabelPrimitive.Root
+      data-slot="label"
+      className={cn(
+        "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export { Label };
+</file>
+
+<file path="Client/src/components/ui/skeleton.tsx">
+import { cn } from "@/lib/utils";
+
+function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="skeleton"
+      className={cn("bg-accent animate-pulse rounded-md", className)}
+      {...props}
+    />
+  );
+}
+
+export { Skeleton };
+</file>
+
+<file path="Client/src/components/ui/spinner.tsx">
+import React from "react";
+import { cn } from "@/lib/utils";
+import { VariantProps, cva } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
+
+const spinnerVariants = cva("flex-col items-center justify-center", {
+  variants: {
+    show: {
+      true: "flex",
+      false: "hidden",
+    },
+  },
+  defaultVariants: {
+    show: true,
+  },
+});
+
+const loaderVariants = cva("animate-spin text-primary", {
+  variants: {
+    size: {
+      small: "size-6",
+      medium: "size-8",
+      large: "size-12",
+    },
+  },
+  defaultVariants: {
+    size: "medium",
+  },
+});
+
+interface SpinnerContentProps
+  extends VariantProps<typeof spinnerVariants>,
+    VariantProps<typeof loaderVariants> {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function Spinner({
+  size,
+  show,
+  children,
+  className,
+}: SpinnerContentProps) {
+  return (
+    <span className={spinnerVariants({ show })}>
+      <Loader2 className={cn(loaderVariants({ size }), className)} />
+      {children}
+    </span>
+  );
+}
+</file>
+
+<file path="Client/src/components/reset-form.tsx">
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FaRegEye } from "react-icons/fa";
+import { FaRegEyeSlash } from "react-icons/fa";
+import { TbReload } from "react-icons/tb";
+import { useRef, useState } from "react";
+
+export function ResetForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
+  const sendOTPIconRef = useRef<HTMLDivElement>(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const togglePasswordVisibility = () => {
+    if (passwordRef.current) {
+      setPasswordVisible(!passwordVisible);
+    }
+  };
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card className="bg-black text-white">
+        <CardHeader>
+          <CardTitle>Reset your password</CardTitle>
+          <CardDescription>
+            Forgot your password? No sweat! Enter your email and we will send
+            you an OTP.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-3">
+                <Label htmlFor="email">Email</Label>
+                <div className="w-full h-4 mb-5 relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="user@example.com"
+                    required
+                  />
+                  <div
+                    className="absolute right-2 top-1/2 cursor-pointer"
+                    ref={sendOTPIconRef}
+                    onMouseEnter={() => {
+                      if (sendOTPIconRef.current) {
+                        sendOTPIconRef.current.classList.add("animate-spin");
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      if (sendOTPIconRef.current) {
+                        sendOTPIconRef.current.classList.remove("animate-spin");
+                      }
+                    }}
+                  >
+                    <TbReload />
+                  </div>
+                </div>
+              </div>
+              <InputOTP maxLength={6} containerClassName="w-full">
+                <InputOTPGroup>
+                  <InputOTPSlot className="w-26 h-16 text-xl" index={0} />
+                  <InputOTPSlot className="w-26 h-16 text-xl" index={1} />
+                  <InputOTPSlot className="w-26 h-16 text-xl" index={2} />
+                  <InputOTPSlot className="w-26 h-16 text-xl" index={3} />
+                  <InputOTPSlot className="w-26 h-16 text-xl" index={4} />
+                  <InputOTPSlot className="w-26 h-16 text-xl" index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+              <div className="grid gap-3">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                </div>
+                <div className="w-full h-4 mb-5 relative">
+                  <Input
+                    id="password"
+                    type={passwordVisible ? "text" : "password"}
+                    placeholder="********"
+                    required
+                    ref={passwordRef}
+                  />
+                  <div
+                    className="absolute right-2 top-1/2 cursor-pointer"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {passwordVisible ? (
+                      <FaRegEyeSlash className="text-gray-400" size={20} />
+                    ) : (
+                      <FaRegEye className="text-gray-400" size={20} />
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-3">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Confirm Password</Label>
+                </div>
+                <Input
+                  id="confirmPassword"
+                  type={passwordVisible ? "text" : "password"}
+                  placeholder="********"
+                  required
+                  ref={confirmPasswordRef}
+                />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button type="submit" className="w-full cursor-pointer">
+                  Reset Password
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 text-center text-sm">
+              Suddenly remember your password?{" "}
+              <a
+                href="/"
+                className="underline underline-offset-4 cursor-pointer"
+              >
+                Sign in here
+              </a>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+</file>
+
+<file path="Client/src/lib/utils.ts">
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+</file>
+
+<file path="Client/src/pages/register/page.tsx">
+import { RegisterForm } from "../../components/register-form";
+
+export default function Register() {
+  return (
+    <>
+      <div className="flex w-full h-screen items-center justify-center bg-gray-950">
+        <div className="w-full max-w-2xl rounded-lg">
+          <RegisterForm />
+        </div>
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path="Client/src/pages/reset-password/page.tsx">
+import { ResetForm } from "@/components/reset-form";
+
+export default function Reset() {
+  return (
+    <>
+      <div className="flex w-full h-screen items-center justify-center bg-gray-950">
+        <div className="w-full max-w-2xl rounded-lg">
+          <ResetForm />
+        </div>
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path="Client/components.json">
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/index.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "iconLibrary": "lucide"
+}
+</file>
+
+<file path="Client/eslint.config.js">
+import js from "@eslint/js";
+import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import tseslint from "typescript-eslint";
+
+export default tseslint.config(
+  { ignores: ["dist"] },
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+    plugins: {
+      "react-hooks": reactHooks,
+      "react-refresh": reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      "react-refresh/only-export-components": [
+        "warn",
+        { allowConstantExport: true },
+      ],
+    },
+  },
+);
+</file>
+
+<file path="Client/index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/CodeLM.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeLM</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="Client/tailwind.config.ts">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  theme: {
+    extend: {
+      keyframes: {
+        "caret-blink": {
+          "0%,70%,100%": { opacity: "1" },
+          "20%,50%": { opacity: "0" },
+        },
+      },
+      animation: {
+        "caret-blink": "caret-blink 1.25s ease-out infinite",
+      },
+    },
+  },
+};
+</file>
+
+<file path="Client/tsconfig.json">
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+</file>
+
+<file path="README.md">
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default tseslint.config({
+  plugins: {
+    // Add the react-x and react-dom plugins
+    'react-x': reactX,
+    'react-dom': reactDom,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended typescript rules
+    ...reactX.configs['recommended-typescript'].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+})
+```
+</file>
+
+<file path="Client/src/components/login-form.tsx">
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FaRegEye } from "react-icons/fa";
+import { FaRegEyeSlash } from "react-icons/fa";
+import { useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import axios from "axios";
+
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const togglePasswordVisibility = () => {
+    if (passwordRef.current) {
+      setPasswordVisible(!passwordVisible);
+    }
+  };
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const email = emailRef.current?.value;
+    const password = passwordRef.current?.value;
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("password", password);
+    axios
+      .post("http://localhost:8000/login", formData, {
+        withCredentials: true,
+      })
+      .then((response) => {
+        if (response.status === 200) {
+          toast.success("Login successful", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+          window.location.href = "/chats";
+        } else {
+          toast.error("Login failed", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        }
+      })
+      .catch((error) => {
+        if (error.response) {
+          toast.error(error.response.data.message, {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        } else {
+          toast.error("Login failed", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        }
+      });
+  }
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card className="bg-black text-white">
+        <CardHeader>
+          <CardTitle>Login to your account</CardTitle>
+          <CardDescription>
+            Enter your email below to login to your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-3">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="user@example.com"
+                  required
+                  ref={emailRef}
+                />
+              </div>
+              <div className="grid gap-3">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <a
+                    href="/reset"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  >
+                    Forgot your password?
+                  </a>
+                </div>
+                <div className="w-full h-4 mb-5 relative">
+                  <Input
+                    id="password"
+                    type={passwordVisible ? "text" : "password"}
+                    placeholder="********"
+                    required
+                    ref={passwordRef}
+                  />
+                  <div
+                    className="absolute right-2 top-1/2 cursor-pointer"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {passwordVisible ? (
+                      <FaRegEyeSlash className="text-gray-400" size={20} />
+                    ) : (
+                      <FaRegEye className="text-gray-400" size={20} />
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button
+                  type="submit"
+                  className="w-full cursor-pointer"
+                  onClick={handleSubmit}
+                >
+                  Login
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 text-center text-sm">
+              Don&apos;t have an account?{" "}
+              <a
+                href="/register"
+                className="underline underline-offset-4 cursor-pointer"
+              >
+                Sign up
+              </a>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+</file>
+
+<file path="Client/src/components/register-form.tsx">
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FaRegEye } from "react-icons/fa";
+import { FaRegEyeSlash } from "react-icons/fa";
+import { useRef, useState } from "react";
+import { toast } from "react-hot-toast";
+import axios from "axios";
+
+export function RegisterForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const togglePasswordVisibility = () => {
+    if (passwordRef.current) {
+      setPasswordVisible(!passwordVisible);
+    }
+  };
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    const password = passwordRef.current?.value.trim();
+    const confirmPassword = confirmPasswordRef.current?.value.trim();
+    const email = emailRef.current?.value.trim();
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match", {
+        duration: 2000,
+        style: {
+          borderRadius: "10px",
+          background: "#333",
+          color: "#fff",
+        },
+      });
+      return;
+    }
+    const formData = new FormData();
+    formData.append(
+      "email",
+      email ? email : emailRef.current?.value.trim() || "",
+    );
+    formData.append(
+      "password",
+      password ? password : passwordRef.current?.value.trim() || "",
+    );
+    axios
+      .post("http://localhost:8000/register", formData, {
+        withCredentials: true,
+      })
+      .then((response) => {
+        if (response.status === 200 || response.status === 201) {
+          toast.success("Registration successful", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        } else {
+          toast.error("Registration has failed", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        }
+      })
+      .catch((error) => {
+        if (error.response) {
+          toast.error(error.response.data.message, {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        } else {
+          toast.error("Registration failed", {
+            duration: 2000,
+            style: {
+              borderRadius: "10px",
+              background: "#333",
+              color: "#fff",
+            },
+          });
+        }
+      });
+  }
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card className="bg-black text-white">
+        <CardHeader>
+          <CardTitle>Sign up</CardTitle>
+          <CardDescription>
+            Sign up to access our exclusive content and services.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <div className="flex flex-col gap-6">
+              <div className="grid gap-3">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  ref={emailRef}
+                  id="email"
+                  type="email"
+                  placeholder="user@example.com"
+                  required
+                />
+              </div>
+              <div className="grid gap-3">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Password</Label>
+                </div>
+                <div className="w-full h-4 mb-5 relative">
+                  <Input
+                    id="password"
+                    type={passwordVisible ? "text" : "password"}
+                    placeholder="********"
+                    required
+                    ref={passwordRef}
+                  />
+                  <div
+                    className="absolute right-2 top-1/2 cursor-pointer"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {passwordVisible ? (
+                      <FaRegEyeSlash className="text-gray-400" size={20} />
+                    ) : (
+                      <FaRegEye className="text-gray-400" size={20} />
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="grid gap-3">
+                <div className="flex items-center">
+                  <Label htmlFor="password">Confirm Password</Label>
+                </div>
+                <Input
+                  id="confirmPassword"
+                  type={passwordVisible ? "text" : "password"}
+                  placeholder="********"
+                  required
+                  ref={confirmPasswordRef}
+                />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button
+                  type="submit"
+                  className="w-full cursor-pointer"
+                  onClick={handleSubmit}
+                >
+                  Register
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 text-center text-sm">
+              Already have an account?{" "}
+              <a
+                href="/"
+                className="underline underline-offset-4 cursor-pointer"
+              >
+                Sign in here
+              </a>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+</file>
+
+<file path="Client/src/pages/login/page.tsx">
+import { LoginForm } from "../../components/login-form";
+import logo from "../../assets/CodeLM.svg";
+
+export default function Login() {
+  return (
+    <>
+      <div className="flex w-full h-screen items-center justify-center bg-gray-950">
+        <div className="w-full max-w-2xl rounded-lg">
+          <img
+            alt="logo"
+            style={{ width: 1400, height: 220 }}
+            src={String(logo)}
+          />
+          <LoginForm />
+        </div>
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path="Client/src/App.css">
+.markdown-content pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-content table td,
+.markdown-content table th {
+  border: 1px solid #4b5563;
+  padding: 0.5rem;
+}
+</file>
+
+<file path="Client/tsconfig.app.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    //* Build Options */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
+</file>
+
+<file path="Client/vite.config.ts">
+import { defineConfig } from "vite";
+import path from "path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+});
+</file>
+
+<file path="package.json">
+{
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "prettier": "3.5.3"
+  },
+  "scripts": {
+    "prepare": "husky"
+  }
+}
+</file>
+
+<file path="Client/.husky/pre-commit">
+npm run format
+npm run lint
+</file>
+
+<file path="Client/src/pages/chat/page.tsx">
+import ChatSidebar from "@/components/chat-sidebar/sidebar";
+/* import Window from "@/components/chat-window/window"; */
+import Window from "@/components/chat-conv/conv";
+import Uploader from "@/components/document-uploader/uploader";
+import { useState } from "react";
+
+export default function Chat() {
+  const [showUploader, setShowUploader] = useState(false);
+  const [reloadSidebar, setReloadSidebar] = useState(false);
+  return (
+    <>
+      <div className="bg-black w-full h-screen flex flex-row relative">
+        <ChatSidebar
+          showUploader={showUploader}
+          setShowUploader={setShowUploader}
+          reloadSidebar={reloadSidebar}
+          setReloadSidebar={setReloadSidebar}
+        />
+        {showUploader && (
+          <Uploader
+            showUploader={showUploader}
+            setShowUploader={setShowUploader}
+            setReloadSidebar={setReloadSidebar}
+          />
+        )}
+        <Window />
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path=".gitignore">
+**/node_modules
+**/dist
+**/build
+.env
+.venv
+env/
+venv/
+__pycache__/
+.vscode/
+</file>
+
+<file path="Client/src/App.tsx">
+import "./App.css";
+import { Toaster } from "react-hot-toast";
+import Register from "./pages/register/page.tsx";
+import Reset from "./pages/reset-password/page.tsx";
+import Chat from "./pages/chat/page.tsx";
+import Chats from "./pages/chats/page.tsx";
+import Login from "./pages/login/page.tsx";
+import RequireAuth from "./auth/authentication.tsx";
+import { PublicAuth } from "./auth/authentication.tsx";
+import { BrowserRouter, Route, Routes } from "react-router";
+
+function App() {
+  return (
+    <>
+      <Toaster />
+      <BrowserRouter>
+        <Routes>
+          <Route element={<PublicAuth />}>
+            <Route path="/" element={<Login />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/reset" element={<Reset />} />
+          </Route>
+          <Route element={<RequireAuth />}>
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/chat/:id" element={<Chat />} />
+            <Route path="/chats" element={<Chats />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </>
+  );
+}
+
+export default App;
+</file>
+
+<file path="Client/src/index.css">
+@import "tailwindcss";
+</file>
+
+<file path="Client/src/main.tsx">
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.tsx";
+
+createRoot(document.getElementById("root")!).render(<App />);
+</file>
+
+<file path="Client/src/components/document-uploader/uploader.tsx">
+import { MdOutlineFileUpload } from "react-icons/md";
+import { useDropzone } from "react-dropzone";
+import { useCallback } from "react";
+import { IoMdClose } from "react-icons/io";
+import toast from "react-hot-toast";
+import axios from "axios";
+
+export default function Uploader(props: {
+  showUploader: boolean;
+  setShowUploader: (show: boolean) => void;
+  setReloadSidebar: (reload: boolean) => void;
+}) {
+  function openFileDialog() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    input.accept = ".pdf, .docx, .txt"; // Add more file types as needed
+    input.onchange = (event) => {
+      const notebookID = window.location.pathname.split("/").pop();
+      if (!notebookID) {
+        toast.error("Notebook ID not found");
+        return;
+      }
+      const formData = new FormData();
+      formData.append("notebookID", notebookID);
+      const files = (event.target as HTMLInputElement)?.files;
+      if (files) {
+        // Handle the selected files
+        for (let i = 0; i < files.length; i++) {
+          formData.append("files", files[i]);
+        }
+      }
+      axios
+        .post("http://localhost:8000/api/upload", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((response) => {
+          console.log("Files uploaded successfully:", response.data);
+          toast.success("Files uploaded successfully");
+          const size = files?.length;
+          const form = new FormData();
+          form.append("source", size ? size.toString() : "0");
+          form.append("notebookID", notebookID);
+          axios
+            .post("http://localhost:8000/api/update-source", form)
+            .then(() => {
+              console.log("Source updated successfully");
+            })
+            .catch((error) => {
+              console.error("Error updating source:", error);
+              toast.error("Error updating source");
+            });
+          // Empty the input value to allow re-uploading the same file
+          input.value = "";
+          // Close the uploader
+          props.setShowUploader(false);
+          props.setReloadSidebar(true);
+        })
+        .catch((error) => {
+          console.error("Error uploading files:", error);
+          toast.error("Error uploading files");
+        });
+    };
+    input.click();
+  }
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    // Handle the dropped files
+    acceptedFiles.forEach((file) => {
+      console.log("Dropped file:", file);
+      // You can perform further actions with the file here
+    });
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: onDrop,
+    noClick: true,
+    accept: {
+      "application/pdf": [".pdf"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        [".docx"],
+      "text/plain": [".txt"],
+    },
+  });
+
+  return (
+    <>
+      <div className="w-full h-screen absolute bg-zinc-800/80 flex justify-center items-center select-none z-50">
+        <div className="absolute top-4 right-4 cursor-pointer">
+          <IoMdClose
+            className="text-white text-3xl"
+            onClick={() => {
+              props.setShowUploader(false);
+            }}
+          />
+        </div>
+        <div className="flex flex-col items-center w-5/6 h-5/6 rounded-xl">
+          <div
+            className="w-full h-full border-white border-2 border-dashed rounded-xl flex justify-center items-center"
+            {...getRootProps()}
+          >
+            <input {...getInputProps()} />
+            {isDragActive ? (
+              <span className="text-white text-xl">
+                Drag and drop your files here
+              </span>
+            ) : (
+              <span className="text-white text-xl">Drop your files here</span>
+            )}
+            <span className="text-white text-xl mx-4">OR</span>
+            <span
+              className="text-white text-xl cursor-pointer hover:bg-blue-900 transition duration-300 ease-in-out rounded-lg bg-blue-600 px-4 py-2"
+              onClick={openFileDialog}
+            >
+              <MdOutlineFileUpload className="text-white text-2xl inline-block mr-2 rounded-4xl " />
+              Choose files
+            </span>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path="Server/models/authModel.py">
+import datetime
+import os
+from http.client import HTTPException
+
+from pymongo import AsyncMongoClient
+
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+
+mongo_client = AsyncMongoClient(MONGO_URI)
+
+db = mongo_client["CodeLM"]
+
+
+async def create_user(user_id: str, password: str, email: str):
+    """
+    Create a new user.
+    """
+    try:
+        user_collection = db["users"]  # Use a separate collection for users
+        await user_collection.insert_one(
+            {
+                "user_id": user_id,
+                "email": email,
+                "password": password,  # hashed of course
+                "created_at": datetime.datetime.utcnow(),
+            }
+        )
+        return user_collection
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+
+
+async def get_user_by_email(email: str):
+    """
+    Get a user by email.
+    """
+    try:
+        user_collection = db["users"]
+        user = await user_collection.find_one({"email": email})
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching user: {str(e)}")
+
+
+async def get_user_by_id(user_id: str):
+    """
+    Get a user by ID.
+    """
+    try:
+        user_collection = db["users"]
+        user = await user_collection.find_one({"user_id": user_id})
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching user: {str(e)}")
+</file>
+
+<file path="Server/models/storage.py">
+import os
+import requests
+from dotenv import load_dotenv
+from supabase import Client, create_client
+import fitz
+
+load_dotenv()
+
+url: str = os.getenv("SUPABASE_URL")
+key: str = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
+
+
+async def upload(file: bytes, file_name: str, bucket_name: str, notebook_id: str):
+    """
+    Upload a file to Supabase storage.
+    """
+    try:
+        # Upload the file
+        response = supabase.storage.from_(bucket_name).upload(
+            f"{notebook_id}/{file_name}", file
+        )
+        print(response)
+        if response and response.full_path:
+            print(f"File {file_name} uploaded successfully.")
+            public_url = supabase.storage.from_(bucket_name).get_public_url(
+                response.full_path
+            )
+            return public_url
+        else:
+            print(f"Error uploading file: {response.error}")
+            return None
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        return None
+
+
+async def delete_file(file_path: str, bucket_name: str):
+    """
+    Delete a file from Supabase storage.
+    """
+    try:
+        # Delete the file
+        response = supabase.storage.from_(bucket_name).remove([file_path])
+        if response:
+            print(f"File {file_path} deleted successfully.")
+            return response
+        else:
+            print(f"Error deleting file: {response.error}")
+            return None
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        return None
+
+
+async def read_file(file_path: str, bucket_name: str, file_type: str):
+    """
+    Read a file from Supabase storage and return its content.
+    """
+    try:
+        # Get the public URL for the file
+        public_url = supabase.storage.from_(bucket_name).get_public_url(file_path)
+        if not public_url:
+            print(f"Could not generate public URL for {file_path}")
+            return None
+
+        # Fetch the file content
+        response = requests.get(public_url)
+        response.raise_for_status()  # Raise exception for HTTP errors
+
+        # Process based on file type
+
+        # Handle document files that need conversion to markdown
+        if file_type == "application/pdf":
+            try:
+                doc = fitz.open(stream=response.content, filetype="pdf")
+                md_text = ""
+                for page in doc:
+                    md_text += page.get_text("text")
+                doc.close()
+                return md_text
+            except Exception as e:
+                print(f"Error converting document to markdown: {e}")
+                return None
+
+        # Handle text-based files
+        elif file_type in [
+            "text/plain",
+            "application/json",
+            "text/markdown",
+        ] or file_type.startswith("text/"):
+            return response.text
+        else:
+            print(f"Unsupported file type: {file_type}")
+            return None
+
+    except requests.RequestException as e:
+        print(f"Error fetching file from URL: {e}")
+        return None
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        return None
+</file>
+
+<file path="Server/routes/authRoutes.py">
+import os
+import time
+import uuid
+from datetime import datetime, timedelta
+
+import jwt
+from dotenv import load_dotenv
+from fastapi import APIRouter, Cookie, Form, Response, status
+from fastapi.security import OAuth2PasswordBearer
+from jwt.exceptions import InvalidTokenError
+from passlib.context import CryptContext
+from pydantic import BaseModel
+
+from models.authModel import create_user, get_user_by_email, get_user_by_id
+
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = "HS256"  # Hash 256
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    refresh_token: str
+
+
+class TokenData(BaseModel):
+    userID: str | None = None
+    token_type: str | None = None
+    exp: int | None = None
+    random: str | None = None
+
+
+class User(BaseModel):
+    userID: str
+    email: str
+
+
+class UserInDB(User):
+    hashed_password: str
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def hash_password(password):
+    return pwd_context.hash(password)
+
+
+def create_access_token(data: dict, expires_delta: int | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update(
+        {"exp": expire, "token_type": "access", "random": str(uuid.uuid4())}
+    )
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def create_refresh_token(data: dict, expires_delta: int | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(days=30)
+    to_encode.update(
+        {"exp": expire, "token_type": "refresh", "random": str(uuid.uuid4())}
+    )
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return TokenData(
+            userID=payload.get("user_id"),
+            token_type=payload.get("token_type"),
+            exp=payload.get("exp"),
+            random=payload.get("random"),
+        )
+    except InvalidTokenError:
+        return None
+
+
+router = APIRouter()
+
+
+@router.post("/register")
+async def register_user_route(
+    res: Response, email: str = Form(...), password: str = Form(...)
+):
+    """
+    Register a new user.
+    """
+    try:
+        print("Registering a new user")
+        # Check if the email is already registered
+        user = await get_user_by_email(email)
+        if user:
+            res.status_code = status.HTTP_400_BAD_REQUEST
+            return {"message": "Email already registered"}
+        user_id = str(uuid.uuid4())
+        password = hash_password(password)
+        await create_user(user_id, password, email)
+        res.status_code = status.HTTP_201_CREATED
+        return {"user_id": user_id}
+    except Exception as e:
+        res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"error": str(e)}
+
+
+@router.post("/login")
+async def login_user_route(
+    res: Response, email: str = Form(...), password: str = Form(...)
+):
+    """
+    Login a user and return an access token.
+    """
+    try:
+        print("Logging in user")
+        # Check if the email is registered
+        user = await get_user_by_email(email)
+        if not user or not verify_password(password, user["password"]):
+            res.status_code = status.HTTP_401_UNAUTHORIZED
+            return {"message": "Invalid credentials"}
+        user_id = user["user_id"]
+        access_tk = create_access_token(data={"user_id": user_id})
+        refresh_tk = create_refresh_token(
+            data={"user_id": user_id}
+        )  # first part supposed to look like the access token, as it is used to refresh the access token
+        res.set_cookie(
+            key="access_token",
+            value=access_tk,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        )
+        res.set_cookie(
+            key="refresh_token",
+            value=refresh_tk,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=30 * 24 * 60 * 60,
+        )  # 30 days
+        res.set_cookie(
+            key="user_id",
+            value=user_id,
+            httponly=True,
+            secure=False,
+            samesite="lax",
+            max_age=30 * 24 * 60 * 60,
+        )  # 30 days
+        return {"message": "Login successful"}
+    except Exception as e:
+        res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": str(e)}
+
+
+@router.post("/check_token")
+async def check_token_route(
+    res: Response, access_token: str = Cookie(None), refresh_token: str = Cookie(None)
+):
+    """
+    Check if the token is valid.
+    """
+    try:
+        print("Checking token")
+        if not access_token:
+            print(refresh_token)
+            if not refresh_token:
+                res.status_code = status.HTTP_401_UNAUTHORIZED
+                return {"message": "No token provided"}
+            else:
+                # Decode the refresh token
+                payload = decode_access_token(refresh_token)
+                if payload is None:
+                    res.status_code = status.HTTP_401_UNAUTHORIZED
+                    return {"message": "Invalid refresh token"}
+                # check if payload userID is existing in the database
+                user = await get_user_by_id(payload.userID)
+                if not user:
+                    res.status_code = status.HTTP_401_UNAUTHORIZED
+                    return {"message": "User not found"}
+                # Create a new access token
+                if payload.token_type == "refresh":
+                    print("Refresh token")
+                    # Check if the refresh token is valid
+                    if payload.exp < time.time():
+                        res.status_code = status.HTTP_401_UNAUTHORIZED
+                        return {"message": "Refresh token expired"}
+                new_access_token = create_access_token(data={"user_id": payload.userID})
+                res.set_cookie(
+                    key="access_token",
+                    value=new_access_token,
+                    httponly=True,
+                    secure=False,
+                    samesite="lax",
+                    max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+                )
+                return {"message": "New access token created"}
+        # Decode the access token
+        payload = decode_access_token(access_token)
+        print(payload)
+        if payload is None:
+            res.status_code = status.HTTP_401_UNAUTHORIZED
+            return {"message": "Invalid token"}
+        if (
+            payload.userID is None or await get_user_by_id(payload.userID) is None
+        ):  # check if the userID is existing in the database
+            res.status_code = status.HTTP_401_UNAUTHORIZED
+            return {"message": "User not found"}
+        # Check if the token type is access
+        if payload.token_type != "access":
+            res.status_code = status.HTTP_401_UNAUTHORIZED
+            return {"message": "Invalid token type"}
+        # Check if the access token is valid
+        print(payload.exp)
+        if payload.exp < time.time():
+            res.status_code = status.HTTP_401_UNAUTHORIZED
+            return {"message": "Token expired"}
+        return {"message": "Token is valid"}
+    except Exception as e:
+        res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": str(e)}
+</file>
+
+<file path="Client/src/pages/chats/page.tsx">
+import { IoIosAdd } from "react-icons/io";
+import { RiEditBoxLine } from "react-icons/ri";
+import { Input } from "@/components/ui/input";
+import { useEffect, useState, useRef } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+function NotebookItem(props: {
+  id: string;
+  showEditTitle: boolean;
+  setShowEditTitle: (showEditTitle: boolean) => void;
+  title: string;
+  createDate: string;
+  source: number;
+  selectedNotebook: string | null;
+  setSelectedNotebook: (id: string | null) => void;
+  onClick?: () => void;
+  handleDelete?: () => void;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showTooltip) {
+      tooltipRef.current?.classList.remove("hidden");
+      tooltipRef.current?.classList.add("flex");
+    } else {
+      tooltipRef.current?.classList.remove("flex");
+      tooltipRef.current?.classList.add("hidden");
+    }
+  }, [showTooltip]);
+
+  const handleContainerClick = (e: React.MouseEvent) => {
+    if (
+      tooltipRef.current?.contains(e.target as Node) ||
+      headerRef.current?.contains(e.target as Node)
+    ) {
+      return;
+    }
+    props.onClick?.();
+  };
+
+  return (
+    <div
+      className="w-60 h-60 cursor-pointer rounded-lg flex flex-col relative shadow-md transition duration-300 ease-in-out justify-between bg-gradient-to-br from-zinc-900 to-zinc-700 hover:from-black hover:to-zinc-800"
+      onClick={handleContainerClick}
+    >
+      {/* Tooltip */}
+      <div
+        className="absolute rounded-lg bg-zinc-600 text-white top-10 -right-20 hidden flex-col items-center mt-2 z-50"
+        ref={tooltipRef}
+      >
+        <div
+          className="w-full h-8 text-md bg-zinc-400/40 hover:bg-zinc-400/50 rounded-tl-lg rounded-tr-lg flex items-center justify-center cursor-pointer p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            props.setSelectedNotebook(props.id);
+            props.setShowEditTitle(true);
+          }}
+        >
+          Edit title
+        </div>
+        <div
+          className="w-full h-8 text-md bg-zinc-400/40 hover:bg-zinc-400/50 rounded-bl-lg rounded-br-lg flex items-center justify-center cursor-pointer p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            props.handleDelete?.();
+            setShowTooltip(false);
+          }}
+        >
+          Delete notebook
+        </div>
+      </div>
+
+      {/* Header */}
+      <div
+        ref={headerRef}
+        className="h-8 text-lg text-white m-2 rounded-4xl px-2 font-medium bg-zinc-400/40 flex flex-row items-center justify-between cursor-pointer hover:bg-zinc-400/50 transition duration-300 ease-in-out"
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowTooltip(!showTooltip);
+        }}
+      >
+        {props.title}
+        <RiEditBoxLine />
+      </div>
+      <div className="flex flex-row items-center justify-evenly mx-4 mb-4">
+        <div className="text-white text-md">{props.createDate}</div>
+        <div className="w-1 h-1 rounded-4xl bg-white"></div>
+        <div className="text-white text-md">
+          {props.source}{" "}
+          {props.source === 1 || props.source === 0 ? "source" : "sources"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditTitle(props: {
+  showEditTitle: boolean;
+  setShowEditTitle: (showEditTitle: boolean) => void;
+  titles: string[];
+  setTitles: React.Dispatch<React.SetStateAction<string[]>>;
+  index?: number;
+  selectedNotebook: string | null;
+}) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [newTitle, setNewTitle] = useState(props.titles[props.index || 0]);
+  function close() {
+    props.setShowEditTitle(false);
+  }
+
+  function outsideClick(e: React.MouseEvent) {
+    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      close();
+    }
+  }
+
+  function confirmChange(newTitle: string) {
+    props.setTitles((prevTitles) => {
+      const newTitles = [...prevTitles];
+      if (props.index !== undefined) {
+        newTitles[props.index] = newTitle;
+      }
+      return newTitles;
+    });
+    props.setShowEditTitle(false);
+    const formData = new FormData();
+    formData.append("title", newTitle);
+    formData.append("notebookID", props.selectedNotebook || "");
+    axios
+      .post(`http://localhost:8000/api/update-title`, formData)
+      .then(() => {
+        toast.success("Notebook title updated successfully");
+      })
+      .catch((err) => {
+        toast.error("Failed to update notebook title", err.message);
+      });
+  }
+
+  useEffect(() => {
+    if (props.showEditTitle) {
+      modalRef.current?.classList.remove("hidden");
+      modalRef.current?.classList.add("flex");
+    } else {
+      modalRef.current?.classList.remove("flex");
+      modalRef.current?.classList.add("hidden");
+    }
+  }, [props.showEditTitle]);
+
+  return (
+    <div
+      className="w-full h-screen absolute top-0 left-0 bg-zinc-900/80 flex justify-center items-center select-none z-50"
+      ref={modalRef}
+      onClick={outsideClick}
+    >
+      <div className="w-1/4 h-50 bg-zinc-700 flex flex-col rounded-lg items-center justify-around">
+        <div className="w-5/6 h-8 relative p-2 flex flex-row items-center justify-between rounded-lg">
+          <h1 className="text-white text-lg font-bold">Edit notebook title</h1>
+          <RiEditBoxLine className="text-white text-3xl" />
+        </div>
+        <Input
+          className="bg-black text-white w-5/6 focus:outline-none focus:border-ring-0 focus-visible:border-ring-0 focus:border-none border-none"
+          placeholder="Enter new title"
+          type="text"
+          defaultValue={props.titles[props.index || 0]}
+          onChange={(e) => setNewTitle(e.target.value)}
+        />
+        <div className="flex flex-row w-4/5 h-10 text-white text-md items-center justify-evenly">
+          <div
+            className="px-8 py-2 bg-red-600 rounded-4xl cursor-pointer hover:bg-red-800"
+            onClick={close}
+          >
+            Cancel
+          </div>
+          <div
+            className="px-8 py-2 bg-green-600 rounded-4xl cursor-pointer hover:bg-green-800"
+            onClick={() => confirmChange(newTitle)}
+          >
+            Confirm
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface RawNotebookData {
+  _id: string;
+  metadata?: {
+    notebook_id?: string;
+    owner?: string;
+    name?: string;
+    created_at?: string;
+    "#_of_source"?: number;
+    updated_at?: string;
+  };
+}
+
+interface ProcessedNotebook {
+  id: string;
+  notebookID?: string;
+  owner?: string;
+  title: string;
+  createdAt?: string;
+  source: number;
+  updatedAt?: string;
+}
+
+export default function Chats() {
+  const [showEditTitle, setShowEditTitle] = useState(false);
+  const [titles, setTitles] = useState<string[]>([]);
+  const [notebooks, setNotebooks] = useState<ProcessedNotebook[]>([]);
+  const [selectedNotebook, setSelectedNotebook] = useState<string | null>(null);
+  async function createNewNotebook() {
+    axios
+      .post(
+        "http://localhost:8000/api/create-notebook",
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      )
+      .then((res) => {
+        window.location.href = `/chat/${res.data.notebook_id}`;
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  async function deleteNotebook(notebookID: string) {
+    axios
+      .delete(`http://localhost:8000/api/delete-notebook/${notebookID}`)
+      .then(() => {
+        console.log("Notebook deleted successfully");
+        toast.success("Notebook deleted successfully");
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Error deleting notebook", err.message);
+      });
+  }
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8000/api/get-notebooks", {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const notebooks = res.data.notebooks;
+        const processedNotebooks = notebooks.map(
+          (notebook: RawNotebookData) => {
+            const metadata = notebook.metadata;
+            const formattedDate = metadata?.created_at
+              ? new Date(metadata.created_at).toISOString().split("T")[0]
+              : "Unknown Date";
+            return {
+              id: notebook._id,
+              notebookID: metadata!.notebook_id,
+              owner: metadata!.owner,
+              title: metadata!.name || "Untitled",
+              createdAt: formattedDate,
+              source: metadata!["#_of_source"] || 0,
+              updatedAt: metadata!.updated_at,
+            };
+          }
+        );
+        setNotebooks(processedNotebooks);
+        setTitles(
+          processedNotebooks.map(
+            (notebook: ProcessedNotebook) => notebook.title
+          )
+        );
+      })
+      .catch((err) => {
+        toast.error("Failed to fetch notebooks", err.message);
+      });
+  }, []);
+
+  return (
+    <>
+      <div className="bg-black w-full h-screen flex flex-col relative items-center overflow-y-scroll">
+        <h1 className="text-white text-5xl font-bold mt-20">
+          Welcome to Code LLM
+        </h1>
+        <div className="text-white p-4 rounded-2xl w-fit h-8 flex flex-row items-center bg-blue-500 cursor-pointer hover:bg-blue-600 transition duration-300 ease-in-out mt-10">
+          <span className="text-xl" onClick={createNewNotebook}>
+            Create new notebook
+          </span>
+          <IoIosAdd className="text-3xl" />
+        </div>
+        <div className="w-5/6 h-0.5 bg-zinc-400/50 mt-20"></div>
+        <div className="grid w-5/6 bg-zinc-800 rounded-xl mt-10 mb-10 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-4 shadow-md content-start">
+          {notebooks.map((notebook, index) => (
+            <NotebookItem
+              key={index}
+              id={notebook.notebookID || ""}
+              showEditTitle={showEditTitle}
+              setShowEditTitle={setShowEditTitle}
+              title={titles[index]}
+              createDate={notebook.createdAt || "Unknown Date"}
+              source={notebook.source || 0}
+              selectedNotebook={selectedNotebook}
+              setSelectedNotebook={setSelectedNotebook}
+              onClick={() => {
+                window.location.href = `/chat/${notebook.notebookID}`;
+              }}
+              handleDelete={() => {
+                deleteNotebook(notebook.notebookID!);
+                setNotebooks((prev) =>
+                  prev.filter((n) => n.notebookID !== notebook.notebookID)
+                );
+              }}
+            />
+          ))}
+        </div>
+        <EditTitle
+          showEditTitle={showEditTitle}
+          titles={titles}
+          setTitles={setTitles}
+          setShowEditTitle={setShowEditTitle}
+          index={
+            selectedNotebook
+              ? notebooks.findIndex(
+                  (notebook) => notebook.notebookID === selectedNotebook
+                )
+              : undefined
+          }
+          selectedNotebook={selectedNotebook}
+        />
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path="Client/src/components/chat-conv/conv.tsx">
+import { useRef, useState, useEffect, useCallback } from "react";
+import { Input } from "@/components/ui/input";
+import axios from "axios";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import toast from "react-hot-toast";
+
+// --- Interface Definitions ---
+interface Message {
+  role: "user" | "model";
+  text: string;
+}
+
+// Define the expected structure of the request body for your backend
+interface BackendRequestBody {
+  user_text: string;
+  history: Message[]; // Send the simple message history
+  notebookID: string; // Send the notebook ID
+}
+
+// Define the expected structure of the successful response
+interface BackendSuccessResponse {
+  reply: string;
+}
+
+// --- Function to Call Backend API ---
+async function getBotResponseFromBackend(
+  userText: string,
+  currentHistory: Message[],
+): Promise<string> {
+  const backendUrl = `${
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+  }/api/chat`; // No idea if this is correct
+
+  console.log(`Calling backend API at: ${backendUrl}`);
+  const notebookID = window.location.pathname.split("/").pop();
+  if (!notebookID) {
+    toast.error("Notebook ID not found");
+    throw new Error("Notebook ID not found");
+  }
+  const requestBody: BackendRequestBody = {
+    user_text: userText,
+    history: currentHistory,
+    notebookID: notebookID,
+  };
+
+  try {
+    const response = await axios.post<BackendSuccessResponse>(
+      backendUrl,
+      requestBody,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true, // Include credentials if needed
+      },
+    ); // Use axios.post
+
+    if (response.status === 200 && response.data && response.data.reply) {
+      console.log("Backend Response Text:", response.data.reply);
+      return response.data.reply;
+    } else {
+      // Handle cases where backend returned success status but invalid data
+      console.error("Invalid response structure from backend:", response.data);
+      throw new Error("Received an invalid response from the server.");
+    }
+  } catch (error) {
+    console.error("Error calling backend API:", error);
+    let errorMessage = "Failed to get response from the bot.";
+    if (axios.isAxiosError(error)) {
+      // Extract more specific error info from Axios error if available
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("Backend Error Data:", error.response.data);
+        console.error("Backend Error Status:", error.response.status);
+        // Try to use error message from backend response if available
+        errorMessage =
+          error.response.data?.detail ||
+          error.response.data?.error ||
+          `Backend Error: ${error.response.status}`;
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error("No response received from backend:", error.request);
+        errorMessage = "The server did not respond. Please try again later.";
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error("Error during request setup:", error.message);
+        errorMessage = `Request setup error: ${error.message}`;
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    throw new Error(errorMessage);
+  }
+}
+
+// --- React Component ---
+export default function ChatWindow() {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const chatWindowRef = useRef<HTMLDivElement>(null);
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const scrollToBottom = useCallback(() => {
+    if (chatBodyRef.current) {
+      // Slight delay ensure rendering is complete
+      setTimeout(() => {
+        if (chatBodyRef.current) {
+          chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+        }
+      }, 0);
+    }
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    // Get messages
+    const notebookID = window.location.pathname.split("/").pop();
+    if (!notebookID) {
+      toast.error("Notebook ID not found");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("notebookID", notebookID);
+    axios
+      .post("http://localhost:8000/api/fetch-messages", formData)
+      .then((response) => {
+        const initialMessages: Message[] = response.data.messages;
+        console.log("Fetched messages:", initialMessages);
+        setMessages(initialMessages);
+      })
+      .catch((error) => {
+        console.error("Error fetching messages:", error);
+        toast.error("Error fetching messages");
+      });
+  }, []);
+
+  // --- Handle sending a message ---
+  const handleSendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim() || isLoading) return;
+      setError(null);
+
+      const userMessage: Message = { role: "user", text };
+      // Important: Send the history *before* adding the latest user message, matching what the previous getBotResponse expected.
+      const historyForBackend = [...messages];
+
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+
+      setIsLoading(true);
+
+      try {
+        // --- Call the NEW Backend function ---
+        const replyText = await getBotResponseFromBackend(
+          text,
+          historyForBackend,
+        ); // Pass history
+        const modelMessage: Message = {
+          role: "model",
+          text: replyText,
+        };
+        setMessages((prevMessages) => [...prevMessages, modelMessage]);
+      } catch (err) {
+        console.error("Error in handleSendMessage:", err);
+        let errorMessage = "Sorry, an error occurred while contacting the bot.";
+        if (err instanceof Error) {
+          errorMessage = err.message; // Use the detailed error message from getBotResponseFromBackend
+        }
+        setError(errorMessage);
+        // Remove the user's message if the API call fails
+        // setMessages(prev => prev.slice(0, -1));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isLoading, messages],
+  ); // Add scrollToBottom if needed inside finally/catch
+
+  return (
+    <>
+      <div
+        className="w-full h-screen bg-zinc-900 flex flex-col items-center transition-all duration-500 ease-in-out"
+        ref={chatWindowRef}
+      >
+        {/* Chat Body */}
+        <div
+          className="w-full flex-grow bg-zinc-900 rounded-xl flex flex-col overflow-y-auto p-4 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none][scrollbar-width:none]"
+          ref={chatBodyRef}
+        >
+          {/* Initial Message Example */}
+          {messages.length === 0 && !isLoading && (
+            <div className="flex justify-center text-gray-400 text-sm">
+              Start the conversation by typing below.
+            </div>
+          )}
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`max-w-[60%] text-white p-3 rounded-xl mb-3 shadow-md ${
+                  message.role === "user" ? "bg-blue-700" : "bg-zinc-700"
+                }`}
+              >
+                <div className="markdown-content prose prose-invert max-w-none prose-pre:whitespace-pre-wrap prose-pre:break-words">
+                  <Markdown remarkPlugins={[remarkGfm]}>
+                    {message.text}
+                  </Markdown>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="max-w-[70%] h-fit text-white p-3 rounded-xl mb-2 text-pretty whitespace-pre-wrap break-words bg-zinc-700 animate-pulse">
+                Thinking...
+              </div>
+            </div>
+          )}
+          {/* Display Error Message */}
+          {error && (
+            <div className="flex justify-center text-red-500 text-sm p-2">
+              Error: {error}
+            </div>
+          )}
+        </div>
+
+        {/* Input Area */}
+        <div className="w-full max-w-4xl px-4 pb-4 pt-2 bg-zinc-900 flex flex-col justify-center items-center border-t border-zinc-700">
+          <div className="w-full flex items-center space-x-2">
+            <Input
+              type="text"
+              placeholder="Type your message here..."
+              className="flex-grow text-white bg-zinc-800 border border-zinc-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-70"
+              ref={inputRef}
+              disabled={isLoading}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && inputRef.current) {
+                  e.preventDefault();
+                  const inputValue = inputRef.current.value;
+                  handleSendMessage(inputValue);
+                }
+              }}
+            />
+            <button
+              onClick={() => {
+                if (inputRef.current) {
+                  handleSendMessage(inputRef.current.value);
+                }
+              }}
+              disabled={isLoading}
+              className="px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path="Client/src/components/chat-sidebar/sidebar.tsx">
+import SidebarItem from "../sidebar-item/sidebar-item";
+import { FaNoteSticky } from "react-icons/fa6";
+import { IoIosArrowBack } from "react-icons/io";
+import { FaTrash } from "react-icons/fa";
+import { useEffect, useRef, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+export interface FileMetadata {
+  file_name: string;
+  file_original_name: string;
+  file_size: number;
+  file_type: string;
+  public_url: string;
+}
+
+export default function ChatSidebar(props: {
+  showUploader: boolean;
+  setShowUploader: (show: boolean) => void;
+  reloadSidebar: boolean;
+  setReloadSidebar: (reload: boolean) => void;
+}) {
+  const minimizeRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
+  const [files, setFiles] = useState<FileMetadata[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const { setShowUploader, reloadSidebar, setReloadSidebar } = props;
+  const openUploader = () => {
+    setShowUploader(true);
+  };
+  const handleMinimize = () => {
+    if (minimizeRef.current) {
+      sidebarRef.current?.classList.toggle("w-1/5");
+      sidebarRef.current?.classList.toggle("w-0");
+      minimizeRef.current?.classList.toggle("rotate-180");
+      minimizeRef.current?.classList.toggle("-translate-x-72");
+    }
+  };
+  useEffect(() => {
+    const notebookID = window.location.pathname.split("/").pop();
+    if (!notebookID) {
+      console.error("Notebook ID not found");
+      return;
+    }
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("notebookID", notebookID);
+    axios
+      .post("http://localhost:8000/api/fetch-files", formData, {
+        withCredentials: true,
+      })
+      .then((response) => {
+        const files = response.data.files;
+        console.log("Fetched files:", files);
+        setFiles(files);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching files:", error);
+        setLoading(false);
+      });
+  }, [reloadSidebar]);
+
+  const toggleFileSelection = (filename: string) => {
+    setSelectedFiles((prev) =>
+      prev.includes(filename)
+        ? prev.filter((file) => file !== filename)
+        : [...prev, filename],
+    );
+  };
+
+  const handleDeleteFiles = () => {
+    const notebookID = window.location.pathname.split("/").pop();
+    if (!notebookID) {
+      console.error("Notebook ID not found");
+      return;
+    }
+
+    setLoading(true);
+    const formData = new FormData();
+    selectedFiles.forEach((file) => {
+      formData.append("files", file);
+    });
+    formData.append("notebookID", notebookID);
+    axios
+      .post("http://localhost:8000/api/delete-files", formData)
+      .then(() => {
+        // Reload file list after deletion
+        const size = selectedFiles.length;
+        const formData = new FormData();
+        formData.append("source", size ? (-size).toString() : "0");
+        formData.append("notebookID", notebookID);
+        axios
+          .post("http://localhost:8000/api/update-source", formData)
+          .then(() => {
+            console.log("Source updated successfully");
+          })
+          .catch((error) => {
+            console.error("Error updating source:", error);
+            toast.error("Error updating source");
+          });
+        toast.success("Files deleted successfully");
+        setSelectedFiles([]);
+        setReloadSidebar(!reloadSidebar);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error deleting files:", error);
+        toast.error("Error deleting files");
+        setLoading(false);
+      });
+  };
+
+  return (
+    <>
+      <div
+        className="bg-black shadow-2xl border-zinc-800 border-r-2 w-1/5 h-screen relative overflow-hidden transition-all duration-500 ease-in-out"
+        ref={sidebarRef}
+      >
+        <div className="flex flex-col items-center h-full">
+          <div className="h-8 hover:bg-zinc-800 transition duration-300 ease-in-out rounded-lg cursor-pointer mt-4 w-4/5 flex justify-center items-center">
+            <h1
+              className="text-white text-lg select-none whitespace-nowrap overflow-ellipsis"
+              onClick={openUploader}
+            >
+              Upload documents
+            </h1>
+            <FaNoteSticky className="text-white text-lg ml-2" />
+          </div>
+          <div className="w-full mt-8 pb-16">
+            {loading ? (
+              <>
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="w-full h-12 mb-2">
+                    <Skeleton className="h-full w-full rounded-lg" />
+                  </div>
+                ))}
+              </>
+            ) : files.length > 0 ? (
+              files.map((file: FileMetadata, index: number) => (
+                <div key={index} className="w-full h-12 mb-2">
+                  <SidebarItem
+                    file={file}
+                    selectedFiles={selectedFiles}
+                    setSelectedFiles={setSelectedFiles}
+                    toggleFileSelection={toggleFileSelection}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="flex justify-center items-center h-32">
+                <p className="text-zinc-500">No files found</p>
+              </div>
+            )}
+          </div>
+
+          {/* Delete button - only appears when files are selected */}
+          {selectedFiles.length > 0 && (
+            <div className="absolute bottom-4 left-0 right-0 mx-auto w-4/5">
+              <button
+                className="bg-red-600 hover:bg-red-700 text-white w-full py-2 rounded-md flex items-center justify-center font-medium transition-colors duration-200"
+                onClick={handleDeleteFiles}
+              >
+                <FaTrash className="mr-2" />
+                Delete Selected ({selectedFiles.length})
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+      <div
+        className="w-8 h-8 rounded-4xl absolute left-72 top-1/2 z-50 hover:bg-zinc-800 transition-all duration-500 ease-in-out cursor-pointer flex justify-center items-center"
+        ref={minimizeRef}
+        onClick={handleMinimize}
+        role="button"
+        aria-label="Toggle Sidebar"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            handleMinimize();
+          }
+        }}
+      >
+        <IoIosArrowBack className="text-white text-xl" />
+      </div>
+    </>
+  );
+}
+</file>
+
+<file path="Client/package.json">
+{
+  "name": "codelm",
+  "description": "Code LM",
+  "author": "Code LM",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "format": "prettier --write .",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "@radix-ui/react-checkbox": "^1.2.2",
+    "@radix-ui/react-label": "^2.1.4",
+    "@radix-ui/react-slot": "^1.2.0",
+    "@tailwindcss/vite": "^4.1.4",
+    "axios": "^1.8.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "input-otp": "^1.4.2",
+    "lucide-react": "^0.488.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-dropzone": "^14.3.8",
+    "react-hot-toast": "^2.5.2",
+    "react-icons": "^5.5.0",
+    "react-markdown": "^10.1.0",
+    "react-redux": "^9.2.0",
+    "react-router": "^7.5.1",
+    "react-toastify": "^11.0.5",
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.2.0",
+    "tailwindcss": "^4.1.4",
+    "tw-animate-css": "^1.2.5",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.22.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "husky": "^9.1.7",
+    "postcss": "^8.5.3",
+    "prettier": "3.5.3",
+    "react-lorem-ipsum": "^1.4.10",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.26.1",
+    "vite": "^6.3.1"
+  }
+}
+</file>
+
+<file path="Server/requirements.txt">
+aiohappyeyeballs==2.6.1
+aiohttp==3.11.18
+aiosignal==1.3.2
+annotated-types==0.7.0
+anyio==4.9.0
+attrs==25.3.0
+autoflake==2.3.1
+bcrypt==3.2.0
+cachetools==5.5.2
+certifi==2025.1.31
+cffi==1.17.1
+cfgv==3.4.0
+charset-normalizer==3.4.1
+click==8.1.8
+deprecation==2.1.0
+distlib==0.3.9
+dnspython==2.7.0
+dotenv==0.9.9
+email_validator==2.2.0
+fastapi==0.115.12
+fastapi-cli==0.0.7
+filelock==3.18.0
+frozenlist==1.6.0
+google-ai-generativelanguage==0.6.15
+google-api-core==2.24.2
+google-api-python-client==2.169.0
+google-auth==2.39.0
+google-auth-httplib2==0.2.0
+google-genai==1.12.1
+googleapis-common-protos==1.70.0
+gotrue==2.12.0
+grpcio==1.71.0
+grpcio-status==1.71.0
+h11==0.14.0
+h2==4.2.0
+hpack==4.1.0
+httpcore==1.0.8
+httplib2==0.22.0
+httptools==0.6.4
+httpx==0.28.1
+hyperframe==6.1.0
+identify==2.6.10
+idna==3.10
+iniconfig==2.1.0
+isort==6.0.1
+Jinja2==3.1.6
+markdown-it-py==3.0.0
+MarkupSafe==3.0.2
+mdurl==0.1.2
+multidict==6.4.3
+nodeenv==1.9.1
+packaging==25.0
+passlib==1.7.4
+platformdirs==4.3.7
+pluggy==1.5.0
+postgrest==1.0.1
+pre_commit==4.2.0
+propcache==0.3.1
+proto-plus==1.26.1
+protobuf==5.29.4
+pyasn1==0.6.1
+pyasn1_modules==0.4.2
+pycparser==2.22
+pydantic==2.11.3
+pydantic_core==2.33.1
+pyflakes==3.3.2
+Pygments==2.19.1
+PyJWT==2.10.1
+pymongo==4.12.0
+PyMuPDF==1.25.5
+pymupdf4llm==0.0.22
+pyparsing==3.2.3
+pytest==8.3.5
+pytest-mock==3.14.0
+python-dateutil==2.9.0.post0
+python-dotenv==1.1.0
+python-multipart==0.0.20
+PyYAML==6.0.2
+realtime==2.4.3
+requests==2.32.3
+rich==14.0.0
+rich-toolkit==0.14.1
+rsa==4.9.1
+shellingham==1.5.4
+six==1.17.0
+sniffio==1.3.1
+starlette==0.46.2
+storage3==0.11.3
+StrEnum==0.4.15
+supabase==2.15.1
+supafunc==0.9.4
+tqdm==4.67.1
+typer==0.15.2
+typing-inspection==0.4.0
+typing_extensions==4.13.2
+uritemplate==4.1.1
+urllib3==2.4.0
+uuid==1.30
+uvicorn==0.34.2
+uvloop==0.21.0
+virtualenv==20.30.0
+watchfiles==1.0.5
+websockets==14.2
+yarl==1.20.0
+</file>
+
+<file path="Server/server.py">
+import os
+
+from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pymongo import AsyncMongoClient
+
+from routes.authRoutes import router as auth_router
+from routes.notebookRoutes import router as notebook_router
+
+# --- Load Environment Variables ---
+load_dotenv()  # Get the local one
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+# --- FastAPI App Initialization ---
+app = FastAPI()
+
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+
+mongo_client = AsyncMongoClient(MONGO_URI)
+
+app.include_router(notebook_router, prefix="/api")
+app.include_router(auth_router)  # does not need a prefix
+
+# --- CORS Configuration ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows GET, POST, etc.
+    allow_headers=["*"],  # Allows all headers
+)
+
+
+# --- Add a root endpoint for basic testing ---
+@app.get("/")
+def read_root():
+    return {"message": "Chat API Backend is running"}
+</file>
+
+<file path="Server/models/notebookModel.py">
+import datetime
+import os
+from http.client import HTTPException
+
+from pymongo import AsyncMongoClient
+
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+
+mongo_client = AsyncMongoClient(MONGO_URI)
+db = mongo_client["CodeLM"]
+# each notebook is a collection that holds the user's input and the model's output
+
+
+async def create_notebook(notebook_id: str, user_id: str):
+    """
+    Create a new notebook.
+    """
+    try:
+        notebook_collection = db[
+            "notebooks"
+        ]  # Create a new collection for the notebook
+        await notebook_collection.insert_one(
+            {
+                "metadata": {
+                    "notebook_id": notebook_id,
+                    "name": "New Notebook",  # Hardcoded, user will have to rename it
+                    "owner": user_id,  # Replace with actual user ID
+                    "created_at": datetime.datetime.utcnow(),
+                    "updated_at": datetime.datetime.utcnow(),
+                    "#_of_source": 0,
+                },
+            }
+        )
+        return notebook_collection
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error creating notebook: {str(e)}"
+        )
+
+
+async def get_notebook_messages(notebook_id: str):  # get messages in the notebook
+    """
+    Get a notebook by its ID.
+    """
+    notebook_collection = db["notebook_messages"]
+    messages = notebook_collection.find({"notebook_id": notebook_id}).sort(
+        "metadata.created_at", 1
+    )  # Sort by created_at in ascending order
+    messages = await messages.to_list(length=None)
+    # Convert ObjectId to string
+    for message in messages:
+        message["_id"] = str(message["_id"])
+        if "user_id" in message:
+            message["user_id"] = str(message["user_id"])
+        if "notebook_id" in message:
+            message["notebook_id"] = str(message["notebook_id"])
+        if "metadata" in message:
+            message["metadata"]["created_at"] = str(message["metadata"]["created_at"])
+            message["metadata"]["updated_at"] = str(message["metadata"]["updated_at"])
+    return messages
+
+
+async def delete_notebook(notebook_id: str):
+    """
+    Delete a notebook by its ID.
+    """
+    notebook_collection = db["notebooks"]
+    if notebook_collection is None:
+        raise HTTPException(status_code=404, detail="Notebook not found")
+    result = await notebook_collection.delete_one({"metadata.notebook_id": notebook_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Notebook not found")
+    # Delete the messages and files associated with the notebook
+    messages_collection = db["notebook_messages"]
+    await messages_collection.delete_many({"notebook_id": notebook_id})
+    files_collection = db["notebook_files"]
+    await files_collection.delete_many({"notebook_id": notebook_id})
+    return {"detail": "Notebook deleted"}
+
+
+async def insert_file_metadata(
+    notebook_id: str,
+    file_name: str,
+    file_type: str,
+    file_size: int,
+    file_original_name: str,
+    public_url: str = None,
+):
+    """
+    Insert file metadata into the notebook.
+    """
+    try:
+        notebook_collection = db["notebook_files"]
+        if notebook_collection is None:
+            raise HTTPException(status_code=404, detail="Notebook not found")
+        await notebook_collection.insert_one(
+            {
+                "file_name": file_name,
+                "file_type": file_type,
+                "file_size": file_size,
+                "file_original_name": file_original_name,
+                "notebook_id": notebook_id,
+                "public_url": public_url,
+                "metadata": {
+                    "created_at": datetime.datetime.utcnow(),
+                    "updated_at": datetime.datetime.utcnow(),
+                },
+            }
+        )
+        return {"detail": "File metadata inserted"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error inserting file metadata: {str(e)}"
+        )
+
+
+async def delete_file_metadata(file_name: str, notebook_id: str):
+    """
+    Delete file metadata from the notebook.
+    """
+    try:
+        notebook_collection = db["notebook_files"]
+        if notebook_collection is None:
+            raise HTTPException(status_code=404, detail="Notebook not found")
+        result = await notebook_collection.delete_one(
+            {"file_name": file_name, "notebook_id": notebook_id}
+        )
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="File not found")
+        return {"detail": "File metadata deleted"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting file metadata: {str(e)}"
+        )
+
+
+async def get_files(notebook_id: str):
+    """
+    Get all files in the notebook.
+    """
+    try:
+        notebook_collection = db["notebook_files"]
+        if notebook_collection is None:
+            raise HTTPException(status_code=404, detail="Notebook not found")
+        files = await notebook_collection.find({"notebook_id": notebook_id}).to_list(
+            length=None
+        )
+        return files
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching files: {str(e)}")
+
+
+async def insert_message(
+    notebook_id: str, message: str, responder: str, user_id: str = None
+):
+    """
+    Insert a message into the notebook.
+    """
+    try:
+        notebook_collection = db["notebook_messages"]
+        # Check if the notebook collection exists
+        if notebook_collection is None:
+            raise HTTPException(status_code=404, detail="Notebook not found")
+        await notebook_collection.insert_one(
+            {
+                "text": message,
+                "by": responder,  # user or gemini model
+                "role": "user" if user_id is not None else "model",
+                "notebook_id": notebook_id,
+                "metadata": {
+                    "created_at": datetime.datetime.utcnow(),
+                    "updated_at": datetime.datetime.utcnow(),
+                },
+                "user_id": user_id,  # Replace with actual user ID, if it is gemini model, it will be None
+            }
+        )
+        return {"detail": "Message inserted"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error inserting message: {str(e)}"
+        )
+
+
+async def get_notebooks(user_id: str):
+    """
+    Get a notebook by its ID.
+    """
+    try:
+        notebook_collection = db["notebooks"]
+        notebooks = (
+            await notebook_collection.find({"metadata.owner": user_id})
+            .sort("metadata.created_at", -1)
+            .to_list()
+        )  # Sort by created_at in descending order
+        # Convert ObjectId to string
+        for notebook in notebooks:
+            notebook["_id"] = str(notebook["_id"])
+            if "owner" in notebook:
+                notebook["owner"] = str(notebook["owner"])
+            if "metadata" in notebook:
+                notebook["metadata"]["created_at"] = str(
+                    notebook["metadata"]["created_at"]
+                )
+                notebook["metadata"]["updated_at"] = str(
+                    notebook["metadata"]["updated_at"]
+                )
+        return notebooks
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching notebook: {str(e)}"
+        )
+
+
+async def update_notebook_metadata(
+    notebook_id: str,
+    title: str = None,
+    created_at: str = None,
+    source: int = None,
+):
+    """
+    Update the metadata of a notebook.
+    """
+    try:
+        notebook_collection = db["notebooks"]
+        if notebook_collection is None:
+            raise HTTPException(status_code=404, detail="Notebook not found")
+        update_data = {}
+        if title:
+            update_data["metadata.name"] = title
+        if created_at:
+            update_data["metadata.created_at"] = created_at
+        if source:
+            old_source = await notebook_collection.find_one(
+                {"metadata.notebook_id": notebook_id}
+            )
+            if old_source is None:
+                raise HTTPException(status_code=404, detail="Notebook not found")
+            update_data["metadata.#_of_source"] = (
+                int(old_source["metadata"]["#_of_source"]) + source
+            )
+        update_data["metadata.updated_at"] = datetime.datetime.utcnow()
+        await notebook_collection.update_one(
+            {"metadata.notebook_id": notebook_id},
+            {"$set": update_data},
+        )
+        return {"detail": "Notebook metadata updated"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error updating notebook metadata: {str(e)}"
+        )
+</file>
+
+<file path="Server/routes/notebookRoutes.py">
+import os
+import uuid
+from typing import List
+import google.genai as genai
+from dotenv import load_dotenv
+from fastapi import (
+    APIRouter,
+    Cookie,
+    File,
+    Form,
+    HTTPException,
+    Response,
+    UploadFile,
+    status,
+)
+from google.genai.types import GenerateContentConfig, ModelContent, Part, UserContent
+from pydantic import BaseModel, Field  # For request/response validation
+
+from models.notebookModel import (
+    create_notebook,
+    delete_file_metadata,
+    delete_notebook,
+    get_files,
+    get_notebook_messages,
+    get_notebooks,
+    insert_file_metadata,
+    insert_message,
+    update_notebook_metadata,
+)
+from models.storage import delete_file, read_file, upload
+
+load_dotenv()
+# --- Load Environment Variables ---
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+MODEL_NAME = "gemini-2.0-flash"
+SYSTEM_INSTRUCTION = os.getenv("SYSTEM_INSTRUCTION")
+
+# ----------- SETTING UP THE API CALLS -----------------
+# --- Configure Logging ---
+router = APIRouter()
+
+if not GEMINI_API_KEY:
+    raise ValueError("API Key not configured")
+
+
+# --- Pydantic Models for Data Validation ---
+class Message(BaseModel):
+    role: str  # Keep as str, validation happens later if needed
+    text: str
+
+
+class ChatRequest(BaseModel):
+    user_text: str = Field(..., min_length=1)  # Ensure user_text is not empty
+    history: List[Message]  # Expects a list of Message objects
+    notebookID: str = Field(..., min_length=1)  # Ensure notebookID is not empty
+
+
+class ChatResponse(BaseModel):
+    reply: str
+
+
+@router.post("/create-notebook")
+async def create_notebook_route(res: Response, user_id: str = Cookie(None)):
+    """
+    Create a new notebook.
+    """
+    print("Creating a new notebook")
+    notebook_id = str(uuid.uuid4())
+    response = await create_notebook(notebook_id, user_id)
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error creating notebook")
+    res.status_code = status.HTTP_201_CREATED
+    return {"notebook_id": notebook_id}  # this is the response body
+
+
+@router.post("/upload")
+async def upload_file_route(
+    res: Response, notebookID: str = Form(...), files: List[UploadFile] = File(...)
+):
+    """
+    Upload a file to the notebook.
+    """
+    print("Uploading files to the notebook")
+    for file in files:
+        file_content = await file.read()
+        file_extension = file.filename.split(".")[-1]
+        unique_filename = str(uuid.uuid4()) + "." + file_extension
+        # Call the upload function from storage.py
+        response = await upload(file_content, unique_filename, "files", notebookID)
+        if response is None:
+            raise HTTPException(status_code=500, detail="Error uploading file")
+        else:
+            insert = await insert_file_metadata(
+                notebookID,
+                unique_filename,
+                file.content_type,
+                file.size,
+                file.filename,
+                response,
+            )
+            if insert is None:
+                raise HTTPException(
+                    status_code=500, detail="Error inserting file metadata"
+                )
+    # If all files are uploaded successfully, return a success message
+    res.status_code = status.HTTP_200_OK
+    return {"detail": "Files uploaded successfully"}
+
+
+# --- API Endpoint ---
+@router.post("/chat", response_model=ChatResponse)
+async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
+    """
+    Receives user text and chat history, calls the Gemini API,
+    and returns the model's reply.
+    """
+    if not GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="API Key not configured on server.",
+        )
+
+    try:
+        client = genai.Client(
+            api_key=GEMINI_API_KEY,
+            # Optional: Set the region if needed
+            # region="us-central1",
+        )
+        files = await get_files(request.notebookID)
+        files_content = []
+        for file in files:
+            print(f"Reading file: {file['file_name']}")
+            file_content = await read_file(
+                f"{request.notebookID}/{file['file_name']}", "files", file["file_type"]
+            )
+            if file_content is not None:
+                files_content.append(
+                    {"file_name": file["file_original_name"], "content": file_content}
+                )
+        # --- Prepare History for Gemini SDK ---
+        # The Python SDK expects history like: [{'role': 'user'/'model', 'parts': [{'text': '...'}]}]
+        history_objs = []
+        for msg in request.history:
+            # Basic validation for role
+            if msg.role == "user":
+                history_objs.append(UserContent(parts=[Part(text=msg.text)]))
+            elif msg.role == "model":
+                history_objs.append(ModelContent(parts=[Part(text=msg.text)]))
+
+        # --- Configuration ---
+        # Keeping it wholesome and Christian
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
+            },
+        ]
+        # Basic model config
+        generation_config = GenerateContentConfig(
+            temperature=0.9,  # 90% randomness, keeping it fresh.
+            max_output_tokens=1000,  # 1000 tokens = 750 words (I think)
+            top_p=0.9,  # consider the top 90% of the probability distribution when generating text.
+            top_k=40,  # consider the top 40 tokens with the highest probabilities when generating text.
+            safety_settings=safety_settings,
+            # system_instruction=SYSTEM_INSTRUCTION,
+        )
+        try:
+            # --- Start Chat Session ---
+            chat_session = client.chats.create(
+                model=MODEL_NAME,
+                history=history_objs,
+                config=generation_config,
+            )
+            # --- Send Message to Gemini ---
+            response = chat_session.send_message(
+                request.user_text,
+            )
+            # --- Process Response ---
+            reply_text = response.text
+            await insert_message(
+                notebook_id=request.notebookID,
+                responder="user",
+                message=request.user_text,
+                user_id=user_id,
+            )
+            await insert_message(
+                notebook_id=request.notebookID,
+                responder=MODEL_NAME,
+                message=reply_text,
+            )
+            return ChatResponse(reply=reply_text)
+
+        except ValueError:
+            # This usually indicates the response was blocked by safety settings
+            # Optionally inspect response.prompt_feedback here
+            feedback = response.prompt_feedback
+            block_reason = "Content may be blocked by safety settings."
+            if feedback.block_reason:
+                block_reason += (
+                    f" Reason: {feedback.block_reason.name}"  # Use .name for enum
+                )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=block_reason
+            )
+        except Exception as e:
+            # Catch other potential errors during response processing
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error processing the bot's response.{str(e)}",
+            )
+
+    except Exception as e:
+        # Catch potential errors during API call setup or sending
+        # You might want more specific error handling based on Gemini SDK exceptions
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while contacting the AI service: {str(e)}",
+        )
+
+
+@router.post("/fetch-messages")
+async def get_messages_route(res: Response, notebookID: str = Form(...)):
+    """
+    Get all messages in the notebook.
+    """
+    print("Getting all messages in the notebook")
+    # Call the get_file function from notebookModel.py
+    messages = await get_notebook_messages(notebookID)
+    if messages is None:
+        return {"detail": "No messages found"}
+    res.status_code = status.HTTP_200_OK
+    return {"messages": messages}
+
+
+@router.post("/fetch-files")
+async def get_files_route(res: Response, notebookID: str = Form(...)):
+    """
+    Get all files in the notebook.
+    """
+    try:
+        print("Getting all files in the notebook")
+        files = await get_files(notebookID)
+        for file in files:
+            # Convert ObjectId to string
+            file["_id"] = str(file["_id"])
+            if "notebook_id" in file:
+                file["notebook_id"] = str(file["notebook_id"])
+            if "created_at" in file:
+                file["created_at"] = str(file["created_at"])
+        res.status_code = status.HTTP_200_OK
+        return {"files": files if files is not None else []}
+    except Exception as e:
+        res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"detail": f"Error fetching files: {str(e)}"}
+
+
+@router.post("/delete-files")
+async def delete_file_route(
+    res: Response, files: List[str] = Form(...), notebookID: str = Form(...)
+):
+    """
+    Delete a file from the notebook.
+    """
+    print("Deleting the file")
+    print(f"Files to delete: {files}")
+    for file_name in files:
+        print(f"Deleting file: {file_name}")
+        print(f"Deleting file from {notebookID}/{file_name}")
+        response = await delete_file(f"{notebookID}/{file_name}", "files")
+        if response is None:
+            raise HTTPException(status_code=500, detail="Error deleting file")
+        response = await delete_file_metadata(file_name, notebookID)
+        if response is None:
+            raise HTTPException(status_code=500, detail="Error deleting file metadata")
+    res.status_code = status.HTTP_200_OK
+    return {"detail": "File deleted"}
+
+
+@router.delete("/delete-notebook/{notebookID}")
+async def delete_notebook_route(res: Response, notebookID: str):
+    """
+    Delete a notebook.
+    """
+    print("Deleting the notebook with ID:", notebookID)
+    # Call the delete_notebook function from notebookModel.py
+    response = await delete_notebook(notebookID)
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error deleting notebook")
+    res.status_code = status.HTTP_200_OK
+    return {"detail": "Notebook deleted"}
+
+
+@router.get("/get-notebooks")
+async def get_notebooks_route(res: Response, user_id: str = Cookie(None)):
+    """
+    Get all notebooks for a user.
+    """
+    print("Getting all notebooks")
+    # Call the get_notebook function from notebookModel.py
+    response = await get_notebooks(user_id)
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error getting notebooks")
+    res.status_code = status.HTTP_200_OK
+    return {"notebooks": response}
+
+
+@router.post("/update-title")
+async def update_title_route(
+    res: Response,
+    title: str = Form(...),
+    notebookID: str = Form(...),
+):
+    """
+    Update the title of a notebook.
+    """
+    print("Updating the notebook title", notebookID)
+    response = await update_notebook_metadata(
+        notebookID,
+        title,
+    )
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error updating notebook title")
+    res.status_code = status.HTTP_200_OK
+    return {"detail": "Notebook title updated"}
+
+
+@router.post("/update-source")
+async def update_source_route(
+    res: Response,
+    source: str = Form(...),
+    notebookID: str = Form(...),
+):
+    """
+    Update the source of a notebook.
+    """
+    print("Updating the notebook source", notebookID)
+    source = int(source)
+    response = await update_notebook_metadata(
+        notebookID,
+        None,
+        None,
+        source,
+    )
+    if response is None:
+        raise HTTPException(status_code=500, detail="Error updating notebook source")
+    res.status_code = status.HTTP_200_OK
+    return {"detail": "Notebook source updated"}
+</file>
+
+</files>
