@@ -74,13 +74,13 @@ function EditTitle(props: {
 }) {
   const modalRef = useRef<HTMLDivElement>(null);
   const currentNotebook = props.notebooks.find(
-    (nb) => nb.notebookID === props.selectedNotebook
+    (nb) => nb.notebookID === props.selectedNotebook,
   );
   const [newTitle, setNewTitle] = useState(currentNotebook?.title || "");
 
   useEffect(() => {
     const currentNb = props.notebooks.find(
-      (nb) => nb.notebookID === props.selectedNotebook
+      (nb) => nb.notebookID === props.selectedNotebook,
     );
     setNewTitle(currentNb?.title || "");
   }, [props.selectedNotebook, props.notebooks]);
@@ -107,8 +107,8 @@ function EditTitle(props: {
       prevNotebooks.map((nb) =>
         nb.notebookID === props.selectedNotebook
           ? { ...nb, title: newTitle }
-          : nb
-      )
+          : nb,
+      ),
     );
     props.setShowEditTitle(false);
 
@@ -127,8 +127,8 @@ function EditTitle(props: {
           prevNotebooks.map((nb) =>
             nb.notebookID === props.selectedNotebook
               ? { ...nb, title: originalTitle || "Untitled" }
-              : nb
-          )
+              : nb,
+          ),
         );
       });
   }
@@ -222,7 +222,7 @@ export default function Chats() {
         {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
-        }
+        },
       )
       .then((res) => {
         toast.success("Notebook created!", { id: toastId });
@@ -279,7 +279,7 @@ export default function Chats() {
               source: metadata?.["#_of_source"] || 0,
               updatedAt: metadata?.updated_at,
             };
-          }
+          },
         );
         setNotebooks(processedNotebooks);
       })
