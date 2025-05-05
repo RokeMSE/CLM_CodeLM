@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import List
+from typing import List, Optional
 import google.genai as genai
 from dotenv import load_dotenv
 from fastapi import (
@@ -55,6 +55,9 @@ class ChatRequest(BaseModel):
     user_text: str = Field(..., min_length=1)  # Ensure user_text is not empty
     history: List[Message]  # Expects a list of Message objects
     notebookID: str = Field(..., min_length=1)  # Ensure notebookID is not empty
+    excluded_files: Optional[List[str]] = Field(
+        default=[]
+    )  # Add excluded files field with default empty list
 
 
 class ChatResponse(BaseModel):
@@ -227,9 +230,14 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             # Optional: Set the region if needed
             # region="us-central1",
         )
+
         files = await get_files(request.notebookID)
         files_content = []
+        print(request.excluded_files)
         for file in files:
+            if file["file_name"] in request.excluded_files:
+                continue
+
             print(f"Reading file: {file['file_name']}")
             file_content = await read_file(
                 f"{request.notebookID}/{file['file_name']}", "files", file["file_type"]

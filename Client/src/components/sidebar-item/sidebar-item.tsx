@@ -14,8 +14,9 @@ export default function SidebarItem(props: {
   refreshFiles: () => void;
 }) {
   const { excludedFiles, setExcludedFiles } = props;
-  const filename = props.file.file_name;
-  const isExcluded = excludedFiles.includes(filename);
+  const filename = props.file.file_original_name;
+  const fileID = props.file.file_name;
+  const isExcluded = excludedFiles.includes(fileID);
   const [showTooltip, setShowTooltip] = useState(false);
   const [showRenameInput, setShowRenameInput] = useState(false);
   const [newName, setNewName] = useState(props.file.file_original_name);
@@ -25,19 +26,17 @@ export default function SidebarItem(props: {
   // Toggle file exclusion (checkbox)
   const toggleFileExclusion = () => {
     if (isExcluded) {
-      setExcludedFiles(excludedFiles.filter((file) => file !== filename));
+      setExcludedFiles(excludedFiles.filter((file) => file !== fileID));
     } else {
-      setExcludedFiles([...excludedFiles, filename]);
+      setExcludedFiles([...excludedFiles, fileID]);
     }
   };
 
-  // Handle checkbox click
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggleFileExclusion();
   };
 
-  // Handle menu click
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowTooltip(!showTooltip);

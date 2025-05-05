@@ -20,18 +20,21 @@ export default function ChatSidebar(props: {
   setReloadSidebar: (reload: boolean) => void;
   minimized: boolean;
   setMinimized: (minimized: boolean) => void;
+  excludedFiles: string[];
+  setExcludedFiles: (excludedFiles: string[]) => void;
 }) {
   const minimizeRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [files, setFiles] = useState<FileMetadata[]>([]);
-  const [excludedFiles, setExcludedFiles] = useState<string[]>([]);
   const {
     setShowUploader,
     reloadSidebar,
     setReloadSidebar,
     minimized,
     setMinimized,
+    excludedFiles,
+    setExcludedFiles,
   } = props;
 
   const openUploader = () => {

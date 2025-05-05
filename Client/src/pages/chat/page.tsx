@@ -12,6 +12,7 @@ export default function Chat() {
 
   const [reloadSidebarFlag, setReloadSidebarFlag] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const [excludedFiles, setExcludedFiles] = useState<string[]>([]);
   const { id: notebookIdFromUrl } = useParams<{ id: string }>();
   const [notebookId, setNotebookId] = useState<string | null>(null);
 
@@ -56,7 +57,6 @@ export default function Chat() {
       </div>
     );
   }
-
   return (
     <>
       <div className="bg-black w-full h-screen flex flex-row relative overflow-hidden">
@@ -79,6 +79,8 @@ export default function Chat() {
             setReloadSidebar={setReloadSidebarFlag}
             minimized={minimized}
             setMinimized={setMinimized}
+            excludedFiles={excludedFiles}
+            setExcludedFiles={setExcludedFiles}
           />
         </div>
 
@@ -95,7 +97,7 @@ export default function Chat() {
             minimized ? "w-full" : "w-4/5"
           }`}
         >
-          <Window />
+          <Window excludedFiles={excludedFiles} />
         </div>
 
         <div className="flex-shrink-0 h-screen">
