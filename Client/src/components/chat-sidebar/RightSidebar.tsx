@@ -35,7 +35,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   const closeNotesEditor = () => setIsNotesEditorOpen(false);
 
   const handleGenerateContent = async (
-    type: "faq" | "study-guide" | "briefing"
+    type: "faq" | "study-guide" | "briefing",
   ) => {
     if (isLoading) return;
     setIsLoading(type);
@@ -65,7 +65,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             "Content-Type": "multipart/form-data",
           },
           withCredentials: true,
-        }
+        },
       );
 
       if (response.status === 200 && response.data.content) {
@@ -86,7 +86,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   const renderButtonContent = (
     type: "faq" | "study-guide" | "briefing",
     text: string,
-    Icon: React.ElementType
+    Icon: React.ElementType,
   ) => {
     if (isLoading === type) {
       return (
@@ -106,7 +106,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   const renderIconButton = (
     type: "faq" | "study-guide" | "briefing",
     label: string,
-    Icon: React.ElementType
+    Icon: React.ElementType,
   ) => {
     return (
       <Button
@@ -163,7 +163,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
               {renderButtonContent(
                 "study-guide",
                 "Generate Study Guide",
-                BookOpen
+                BookOpen,
               )}
             </Button>
             <Button
@@ -175,7 +175,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
               {renderButtonContent(
                 "briefing",
                 "Generate Briefing Doc",
-                FileText
+                FileText,
               )}
             </Button>
             <div className="border-t border-zinc-600 pt-3 mt-3"></div>

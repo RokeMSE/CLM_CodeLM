@@ -42,7 +42,7 @@ const GeneratedContentModal: React.FC<GeneratedContentModalProps> = ({
             "Content-Type": "multipart/form-data",
           },
           withCredentials: true,
-        }
+        },
       );
 
       if (response.status === 200 || response.status === 201) {

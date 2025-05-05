@@ -39,18 +39,19 @@ const MarkdownEditorModal: React.FC<MarkdownEditorModalProps> = ({
     const formData = new FormData();
     formData.append("notebookID", notebookId);
     formData.append("content", content);
+    formData.append("title", "My Note"); // Default title for the note
     formData.append("source_type", "note");
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/save-note-as-source",
+        "http://localhost:8000/api/save-generated-source",
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
           },
           withCredentials: true,
-        }
+        },
       );
 
       if (response.status === 200 || response.status === 201) {
