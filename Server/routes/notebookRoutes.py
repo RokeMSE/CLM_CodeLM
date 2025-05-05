@@ -178,6 +178,12 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             # system_instruction=SYSTEM_INSTRUCTION,
         )
         try:
+            prompt = ""
+            for file in files_content:
+                prompt += f"File Name: {file['file_name']}\n"
+                prompt += f"Content: {file['content']}\n\n"
+            # Add the system instruction to the prompt
+            prompt += request.user_text
             # --- Start Chat Session ---
             chat_session = client.chats.create(
                 model=MODEL_NAME,
@@ -185,9 +191,7 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
                 config=generation_config,
             )
             # --- Send Message to Gemini ---
-            response = chat_session.send_message(
-                request.user_text,
-            )
+            response = chat_session.send_message(prompt)
             # --- Process Response ---
             reply_text = response.text
             await insert_message(
