@@ -8,7 +8,7 @@ export default function Chat() {
   const [showUploader, setShowUploader] = useState(false);
   const [reloadSidebar, setReloadSidebar] = useState(false);
   const [minimized, setMinimized] = useState(false);
-
+  const [excludedFiles, setExcludedFiles] = useState<string[]>([]);
   return (
     <>
       <div className="bg-black w-full h-screen flex flex-row relative">
@@ -31,6 +31,8 @@ export default function Chat() {
             setReloadSidebar={setReloadSidebar}
             minimized={minimized}
             setMinimized={setMinimized}
+            excludedFiles={excludedFiles}
+            setExcludedFiles={setExcludedFiles}
           />
         </div>
         {showUploader && (
@@ -45,7 +47,7 @@ export default function Chat() {
             minimized ? "w-full" : "w-4/5"
           }`}
         >
-          <Window />
+          <Window excludedFiles={excludedFiles} />
         </div>
       </div>
     </>

@@ -16,6 +16,7 @@ interface BackendRequestBody {
   user_text: string;
   history: Message[]; // Send the simple message history
   notebookID: string; // Send the notebook ID
+  excluded_files: string[]; // Send the excluded files original names
 }
 
 // Define the expected structure of the successful response
@@ -27,6 +28,7 @@ interface BackendSuccessResponse {
 async function getBotResponseFromBackend(
   userText: string,
   currentHistory: Message[],
+  excludedFiles: string[],
 ): Promise<string> {
   const backendUrl = `${
     import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
@@ -42,6 +44,7 @@ async function getBotResponseFromBackend(
     user_text: userText,
     history: currentHistory,
     notebookID: notebookID,
+    excluded_files: excludedFiles,
   };
 
   try {
@@ -96,7 +99,9 @@ async function getBotResponseFromBackend(
 }
 
 // --- React Component ---
-export default function ChatWindow() {
+export default function ChatWindow(props: {
+  excludedFiles: string[]; // Pass the excluded files
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
   const chatBodyRef = useRef<HTMLDivElement>(null);
@@ -120,28 +125,6 @@ export default function ChatWindow() {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  useEffect(() => {
-    // Get messages
-    const notebookID = window.location.pathname.split("/").pop();
-    if (!notebookID) {
-      toast.error("Notebook ID not found");
-      return;
-    }
-    const formData = new FormData();
-    formData.append("notebookID", notebookID);
-    axios
-      .post("http://localhost:8000/api/fetch-messages", formData)
-      .then((response) => {
-        const initialMessages: Message[] = response.data.messages;
-        console.log("Fetched messages:", initialMessages);
-        setMessages(initialMessages);
-      })
-      .catch((error) => {
-        console.error("Error fetching messages:", error);
-        toast.error("Error fetching messages");
-      });
-  }, []);
-
   // --- Handle sending a message ---
   const handleSendMessage = useCallback(
     async (text: string) => {
@@ -149,7 +132,6 @@ export default function ChatWindow() {
       setError(null);
 
       const userMessage: Message = { role: "user", text };
-      // Important: Send the history *before* adding the latest user message, matching what the previous getBotResponse expected.
       const historyForBackend = [...messages];
 
       setMessages((prevMessages) => [...prevMessages, userMessage]);
@@ -160,12 +142,14 @@ export default function ChatWindow() {
 
       setIsLoading(true);
 
+      const currentExcludedFiles = props.excludedFiles;
+
       try {
-        // --- Call the NEW Backend function ---
         const replyText = await getBotResponseFromBackend(
           text,
           historyForBackend,
-        ); // Pass history
+          currentExcludedFiles, // Use the current value
+        );
         const modelMessage: Message = {
           role: "model",
           text: replyText,
@@ -184,8 +168,8 @@ export default function ChatWindow() {
         setIsLoading(false);
       }
     },
-    [isLoading, messages],
-  ); // Add scrollToBottom if needed inside finally/catch
+    [isLoading, messages, props.excludedFiles], // Keep the dependency
+  );
 
   return (
     <>
