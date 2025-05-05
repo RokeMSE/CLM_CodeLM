@@ -29,6 +29,7 @@ from models.notebookModel import (
     update_notebook_metadata,
 )
 from models.storage import delete_file, read_file, upload
+import datetime
 
 load_dotenv()
 # --- Load Environment Variables ---
@@ -58,6 +59,105 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+
+
+class GenerationResponse(BaseModel):
+    content: str
+
+
+async def get_combined_source_content(notebook_id: str) -> str:
+    """
+    Retrieves all files for a notebook, reads their content,
+    and combines them into a single string.
+    """
+    try:
+        files = await get_files(notebook_id)
+        combined_content = ""
+        if not files:
+            return combined_content
+
+        for file_meta in files:
+            file_path = f"{notebook_id}/{file_meta.get('file_name')}"
+            bucket_name = "files"
+            file_type = file_meta.get("file_type")
+            original_name = file_meta.get("file_original_name", "Unknown File")
+            print(f"Reading source file: {original_name} ({file_path})")
+            file_content = await read_file(file_path, bucket_name, file_type)
+
+            if file_content:
+                combined_content += f"--- Source: {original_name} ---\n"
+                combined_content += file_content
+                combined_content += "\n\n"  # Add separation between files
+            else:
+                print(f"Warning: Could not read content for file {original_name}")
+                combined_content += (
+                    f"--- Source: {original_name} (Could not read content) ---\n\n"
+                )
+        return combined_content.strip()
+    except Exception as e:
+        print(f"Error getting combined source content for notebook {notebook_id}: {e}")
+        return ""
+
+
+async def generate_single_turn(prompt: str) -> str:
+    """
+    Sends a single prompt to the Gemini API and returns the text response.
+    """
+    if not GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="API Key not configured on server.",
+        )
+
+    try:
+        generation_config = GenerateContentConfig(
+            temperature=0.7,
+            max_output_tokens=2048,
+            top_p=0.9,
+            top_k=40,
+        )
+
+        gemini_client = genai.Client(
+            api_key=GEMINI_API_KEY,
+        )
+
+        print(
+            f"Sending generation prompt (length: {len(prompt)} chars) to model: {MODEL_NAME}"
+        )
+        response = gemini_client.models.generate_content(
+            model=MODEL_NAME, contents=prompt, config=generation_config
+        )
+
+        if (
+            response.candidates
+            and response.candidates[0].content
+            and response.candidates[0].content.parts
+        ):
+            reply_text = response.candidates[0].content.parts[0].text
+            print("Generation successful.")
+            return reply_text
+        elif response.prompt_feedback.block_reason:
+            block_reason_str = response.prompt_feedback.block_reason.name
+            print(f"Generation blocked. Reason: {block_reason_str}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Content generation blocked by safety filters: {block_reason_str}",
+            )
+        else:
+            # Handle cases where response is empty but not blocked (rare)
+            print("Generation resulted in empty response without explicit blocking.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="AI model returned an empty response.",
+            )
+
+    except Exception as e:
+        print(f"Error during Gemini API call: {e}")
+        # Catch other potential errors during API call setup or sending
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while contacting the AI service: {str(e)}",
+        )
 
 
 @router.post("/create-notebook")
@@ -375,3 +475,167 @@ async def get_notebook_metadata_route(res: Response, notebookID: str = Form(...)
         return {"detail": "No metadata found"}
     res.status_code = status.HTTP_200_OK
     return {"metadata": metadata}
+
+
+@router.post("/generate-faq", response_model=GenerationResponse)
+async def generate_faq_route(notebookID: str = Form(...)):
+    """
+    Generates Frequently Asked Questions based on the notebook's source documents.
+    """
+    print(f"Generating FAQ for notebook: {notebookID}")
+    source_content = await get_combined_source_content(notebookID)
+    if not source_content:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No source content found for this notebook to generate FAQ.",
+        )
+
+    prompt = f"""Based *only* on the following document content, generate a list of 3-5 frequently asked questions (FAQs) and their answers. Format each as a question followed by its answer. Document Content:
+{source_content}
+
+FAQs:
+"""
+    try:
+        generated_text = await generate_single_turn(prompt)
+        return GenerationResponse(content=generated_text)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"Unexpected error generating FAQ: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate FAQ: {str(e)}")
+
+
+@router.post("/generate-study-guide", response_model=GenerationResponse)
+async def generate_study_guide_route(notebookID: str = Form(...)):
+    """
+    Generates a study guide (key topics, potential questions) based on the notebook's source documents.
+    """
+    print(f"Generating Study Guide for notebook: {notebookID}")
+    source_content = await get_combined_source_content(notebookID)
+    if not source_content:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No source content found for this notebook to generate a study guide.",
+        )
+
+    prompt = f"""Analyze the following document content and generate a concise study guide. Include:
+    1.  A list of the main key topics covered.
+    2.  3-4 potential short-answer or definition questions based *only* on the provided text.
+
+    Document Content:
+    {source_content}
+
+    Study Guide:
+    """
+    try:
+        generated_text = await generate_single_turn(prompt)
+        return GenerationResponse(content=generated_text)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"Unexpected error generating Study Guide: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate Study Guide: {str(e)}"
+        )
+
+
+@router.post("/generate-briefing", response_model=GenerationResponse)
+async def generate_briefing_route(notebookID: str = Form(...)):
+    """
+    Generates a briefing (summary) based on the notebook's source documents.
+    """
+    print(f"Generating Briefing for notebook: {notebookID}")
+    source_content = await get_combined_source_content(notebookID)
+    if not source_content:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No source content found for this notebook to generate a briefing.",
+        )
+
+    prompt = f"""Based *only* on the following document content, generate a concise briefing. 
+    The briefing should summarize the key points and findings from the documents.
+
+    Document Content:
+    {source_content}
+
+    Briefing:
+    """
+    try:
+        generated_text = await generate_single_turn(prompt)
+        return GenerationResponse(content=generated_text)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"Unexpected error generating Briefing: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate Briefing: {str(e)}"
+        )
+
+
+@router.post("/save-generated-source")
+async def save_generated_source_route(
+    res: Response,
+    notebookID: str = Form(...),
+    content: str = Form(...),
+    title: str = Form(...),
+):
+    """
+    Saves text content (from user notes or generation) as a new markdown source file
+    associated with the notebook.
+    """
+    print(
+        f"Saving generated/note content as source for notebook: {notebookID}, Title: {title}"
+    )
+
+    if not content.strip():
+        raise HTTPException(status_code=400, detail="Content cannot be empty.")
+    if not title.strip():
+        raise HTTPException(status_code=400, detail="Title cannot be empty.")
+
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    try:
+        file_content_bytes = content.encode("utf-8")
+        file_size = len(file_content_bytes)
+        unique_filename = f"{timestamp}.md"  # Save as markdown
+        file_type = "text/markdown"
+        bucket_name = "files"
+
+        print(
+            f"Uploading new source file: {unique_filename} to bucket: {bucket_name}/{notebookID}"
+        )
+        public_url = await upload(
+            file_content_bytes, unique_filename, bucket_name, notebookID
+        )
+
+        if not public_url:
+            print("Error: Failed to upload generated source to storage.")
+            raise HTTPException(
+                status_code=500, detail="Error saving source file to storage."
+            )
+        else:
+            print(f"Successfully uploaded. Public URL: {public_url}")
+
+        print(f"Inserting metadata for new source: {unique_filename}")
+        await insert_file_metadata(
+            notebook_id=notebookID,
+            file_name=unique_filename,
+            file_type=file_type,
+            file_size=file_size,
+            file_original_name=title,  # Use the provided title as the display name
+            public_url=public_url,
+        )
+
+        await update_notebook_metadata(notebook_id=notebookID, source=1)
+
+        res.status_code = status.HTTP_201_CREATED  # Use 201 for resource creation
+        return {
+            "detail": "Source saved successfully",
+            "filename": unique_filename,
+            "public_url": public_url,
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        print(f"Unexpected error saving generated source: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save source: {str(e)}")
