@@ -62,7 +62,7 @@ export default function SidebarItem(props: {
         const form = new FormData();
         form.append("source", "-1");
         form.append("notebookID", notebookID);
-        
+
         axios
           .post("http://localhost:8000/api/update-source", form)
           .then(() => {
@@ -78,7 +78,7 @@ export default function SidebarItem(props: {
         console.error("Error removing file:", error);
         toast.error("Error removing file");
       });
-      
+
     setShowTooltip(false);
   };
 
@@ -92,8 +92,12 @@ export default function SidebarItem(props: {
   // Close tooltip when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node) &&
-          menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        tooltipRef.current &&
+        !tooltipRef.current.contains(event.target as Node) &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
         setShowTooltip(false);
       }
     };
@@ -106,17 +110,17 @@ export default function SidebarItem(props: {
     <div className="h-10 shadow-md mb-2 mx-4 rounded-lg cursor-pointer hover:bg-zinc-800 transition duration-300 ease-in-out flex items-center justify-between relative">
       <div className="flex flex-row items-center h-full overflow-hidden">
         {/* Menu button */}
-        <div 
+        <div
           ref={menuRef}
           className="p-1 hover:bg-zinc-700 rounded-full ml-2 z-10"
           onClick={handleMenuClick}
         >
           <BiDotsVerticalRounded className="text-white text-xl" />
         </div>
-        
+
         {/* File icon */}
         <FaFilePdf className="text-red-600 ml-3 flex-shrink-0" />
-        
+
         {/* File name */}
         <h1 className="text-white text-md ml-2 truncate">
           {props.file.file_original_name}
@@ -133,10 +137,10 @@ export default function SidebarItem(props: {
           aria-label="Include file in requests"
         />
       </div>
-      
+
       {/* Tooltip moved outside the button */}
       {showTooltip && (
-        <div 
+        <div
           ref={tooltipRef}
           className="absolute left-10 top-0 bg-zinc-900 rounded-lg shadow-lg overflow-hidden z-50 w-40"
         >
@@ -150,7 +154,7 @@ export default function SidebarItem(props: {
                 autoFocus
               />
               <div className="flex justify-end mt-1">
-                <button 
+                <button
                   className="text-zinc-400 text-xs mr-2"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -159,7 +163,7 @@ export default function SidebarItem(props: {
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   className="text-blue-500 text-xs"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -172,7 +176,7 @@ export default function SidebarItem(props: {
             </div>
           ) : (
             <>
-              <div 
+              <div
                 className="flex items-center p-2 text-white hover:bg-zinc-800"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -182,7 +186,7 @@ export default function SidebarItem(props: {
                 <MdOutlineEdit className="mr-2" />
                 <span className="text-sm">Rename source</span>
               </div>
-              <div 
+              <div
                 className="flex items-center p-2 text-white hover:bg-zinc-800"
                 onClick={(e) => {
                   e.stopPropagation();
