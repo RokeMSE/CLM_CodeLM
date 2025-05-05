@@ -1,6 +1,6 @@
 import datetime
 import os
-from http.client import HTTPException
+from fastapi import HTTPException
 
 from pymongo import AsyncMongoClient
 

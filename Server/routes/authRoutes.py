@@ -233,5 +233,6 @@ async def check_token_route(
             return {"message": "Token expired"}
         return {"message": "Token is valid"}
     except Exception as e:
+        print(str(e))
         res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": str(e)}
