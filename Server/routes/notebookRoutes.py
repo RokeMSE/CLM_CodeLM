@@ -18,8 +18,10 @@ from pydantic import BaseModel, Field  # For request/response validation
 
 from models.notebookModel import (
     create_notebook,
+    delete_all_file_metadata,
     delete_file_metadata,
     delete_notebook,
+    delete_notebook_messages,
     get_files,
     get_notebook_messages,
     get_notebook_metadata,
@@ -404,15 +406,42 @@ async def delete_file_route(
 @router.delete("/delete-notebook/{notebookID}")
 async def delete_notebook_route(res: Response, notebookID: str):
     """
-    Delete a notebook.
+    Delete a notebook and all associated data (files, metadata, messages).
     """
-    print("Deleting the notebook with ID:", notebookID)
-    # Call the delete_notebook function from notebookModel.py
-    response = await delete_notebook(notebookID)
-    if response is None:
-        raise HTTPException(status_code=500, detail="Error deleting notebook")
-    res.status_code = status.HTTP_200_OK
-    return {"detail": "Notebook deleted"}
+    print("Deleting notebook with ID:", notebookID)
+
+    try:
+        # 1. Get all files for this notebook
+        files = await get_files(notebookID)
+
+        # 2. Delete each file from storage
+        if files:
+            for file in files:
+                file_name = file.get("file_name")
+                print(f"Deleting file from storage: {notebookID}/{file_name}")
+                await delete_file(f"{notebookID}/{file_name}", "files")
+
+        # 3. Delete all file metadata for this notebook (batch operation)
+        print(f"Deleting all file metadata for notebook: {notebookID}")
+        await delete_all_file_metadata(notebookID)
+
+        # 4. Delete all messages for this notebook
+        print(f"Deleting all messages for notebook: {notebookID}")
+        await delete_notebook_messages(notebookID)
+
+        # 5. Finally delete the notebook itself
+        response = await delete_notebook(notebookID)
+        if response is None:
+            raise HTTPException(status_code=500, detail="Error deleting notebook")
+
+        res.status_code = status.HTTP_200_OK
+        return {"detail": "Notebook and all associated data deleted successfully"}
+
+    except Exception as e:
+        print(f"Error during notebook deletion: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Error deleting notebook: {str(e)}"
+        )
 
 
 @router.get("/get-notebooks")
