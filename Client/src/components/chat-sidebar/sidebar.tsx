@@ -115,7 +115,7 @@ export default function ChatSidebar(props: {
         }`}
         ref={sidebarRef}
       >
-        <div className="flex flex-col items-center h-screen">
+        <div className="flex flex-col items-center h-screen bg-zinc-800">
           <div className="h-8 hover:bg-zinc-800 transition duration-300 ease-in-out rounded-lg cursor-pointer mt-4 w-4/5 flex justify-center items-center">
             <h1
               className="text-white text-lg select-none whitespace-nowrap overflow-ellipsis"
@@ -154,8 +154,8 @@ export default function ChatSidebar(props: {
         </div>
       </div>
       <div
-        className={`w-8 h-8 rounded-full bg-black border border-zinc-800 absolute top-1/2 transform -translate-y-1/2 z-50 hover:bg-zinc-800 transition-all duration-500 ease-in-out cursor-pointer flex justify-center items-center ${
-          minimized ? "left-2" : "left-[calc(20%-4px)] -translate-x-full"
+        className={`w-8 h-8 rounded-full bg-zinc-800 border-2 border-zinc-600 absolute top-1/2 transform -translate-y-1/2 z-50 hover:bg-zinc-600 transition-all duration-500 ease-in-out cursor-pointer flex justify-center items-center ${
+          minimized ? "left-2" : "left-[calc(20%-40px)] -translate-x-full"
         }`}
         ref={minimizeRef}
         onClick={handleMinimize}
