@@ -1,13 +1,10 @@
 import datetime
 import os
 from fastapi import HTTPException
-
 from pymongo import AsyncMongoClient
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-
 mongo_client = AsyncMongoClient(MONGO_URI)
-
 db = mongo_client["CodeLM"]
 
 

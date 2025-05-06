@@ -15,7 +15,9 @@ from fastapi import (
 )
 from google.genai.types import GenerateContentConfig, ModelContent, Part, UserContent
 from pydantic import BaseModel, Field  # For request/response validation
-
+from langchain_google_genai.embeddings import GoogleGenerativeAIEmbeddings
+from langchain_chroma import Chroma
+from langchain_core.prompts import ChatPromptTemplate
 from models.notebookModel import (
     create_notebook,
     delete_all_file_metadata,
@@ -30,15 +32,23 @@ from models.notebookModel import (
     insert_message,
     update_notebook_metadata,
 )
-from models.storage import delete_file, read_file, upload
+from models.storage import delete_file, query_file, upload
 import datetime
+from chromadb.config import Settings
 
 load_dotenv()
 # --- Load Environment Variables ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 MODEL_NAME = "gemini-2.0-flash"
 SYSTEM_INSTRUCTION = os.getenv("SYSTEM_INSTRUCTION")
-
+embeddings = GoogleGenerativeAIEmbeddings(
+    model="models/embedding-001",
+    google_api_key=GEMINI_API_KEY,
+)
+os.makedirs("./chroma_db", exist_ok=True)
+gemini_client = genai.Client(
+    api_key=GEMINI_API_KEY,
+)
 # ----------- SETTING UP THE API CALLS -----------------
 # --- Configure Logging ---
 router = APIRouter()
@@ -70,40 +80,6 @@ class GenerationResponse(BaseModel):
     content: str
 
 
-async def get_combined_source_content(notebook_id: str) -> str:
-    """
-    Retrieves all files for a notebook, reads their content,
-    and combines them into a single string.
-    """
-    try:
-        files = await get_files(notebook_id)
-        combined_content = ""
-        if not files:
-            return combined_content
-
-        for file_meta in files:
-            file_path = f"{notebook_id}/{file_meta.get('file_name')}"
-            bucket_name = "files"
-            file_type = file_meta.get("file_type")
-            original_name = file_meta.get("file_original_name", "Unknown File")
-            print(f"Reading source file: {original_name} ({file_path})")
-            file_content = await read_file(file_path, bucket_name, file_type)
-
-            if file_content:
-                combined_content += f"--- Source: {original_name} ---\n"
-                combined_content += file_content
-                combined_content += "\n\n"  # Add separation between files
-            else:
-                print(f"Warning: Could not read content for file {original_name}")
-                combined_content += (
-                    f"--- Source: {original_name} (Could not read content) ---\n\n"
-                )
-        return combined_content.strip()
-    except Exception as e:
-        print(f"Error getting combined source content for notebook {notebook_id}: {e}")
-        return ""
-
-
 async def generate_single_turn(prompt: str) -> str:
     """
     Sends a single prompt to the Gemini API and returns the text response.
@@ -121,11 +97,6 @@ async def generate_single_turn(prompt: str) -> str:
             top_p=0.9,
             top_k=40,
         )
-
-        gemini_client = genai.Client(
-            api_key=GEMINI_API_KEY,
-        )
-
         print(
             f"Sending generation prompt (length: {len(prompt)} chars) to model: {MODEL_NAME}"
         )
@@ -225,31 +196,32 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="API Key not configured on server.",
         )
-
+    context = ""
     try:
-        client = genai.Client(
-            api_key=GEMINI_API_KEY,
-            # Optional: Set the region if needed
-            # region="us-central1",
+        vectorDB = Chroma(
+            collection_name=request.notebookID,
+            embedding_function=embeddings,
+            persist_directory="./chroma_db",
+            client_settings=Settings(
+                anonymized_telemetry=False,
+                is_persistent=True,
+            ),
         )
 
-        files = await get_files(request.notebookID)
-        files_content = []
-        print(request.excluded_files)
-        for file in files:
-            if file["file_name"] in request.excluded_files:
-                continue
+        context = await query_file(
+            vectorDB,
+            request.user_text,
+            excluded_files=request.excluded_files,
+            num_docs=100,
+        )
+        if not context:
+            context = "No relevant context found."
+        else:
+            context = "\n".join([doc.page_content for doc in context])
+            print(f"Context retrieved: {context[:100]}...")
 
-            print(f"Reading file: {file['file_name']}")
-            file_content = await read_file(
-                f"{request.notebookID}/{file['file_name']}", "files", file["file_type"]
-            )
-            if file_content is not None:
-                files_content.append(
-                    {"file_name": file["file_original_name"], "content": file_content}
-                )
-        # --- Prepare History for Gemini SDK ---
-        # The Python SDK expects history like: [{'role': 'user'/'model', 'parts': [{'text': '...'}]}]
+        # # --- Prepare History for Gemini SDK ---
+        # # The Python SDK expects history like: [{'role': 'user'/'model', 'parts': [{'text': '...'}]}]
         history_objs = []
         for msg in request.history:
             # Basic validation for role
@@ -285,25 +257,32 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             top_p=0.9,  # consider the top 90% of the probability distribution when generating text.
             top_k=40,  # consider the top 40 tokens with the highest probabilities when generating text.
             safety_settings=safety_settings,
-            # system_instruction=SYSTEM_INSTRUCTION,
+            system_instruction=SYSTEM_INSTRUCTION,
         )
+        prompt = ChatPromptTemplate(
+            [
+                (
+                    "system",
+                    "Use the following context to help answer the user's question: {context}",
+                ),
+                ("user", "{user_input}"),
+            ]
+        )
+        formatted_prompt = prompt.format_prompt(
+            user_input=request.user_text,
+            context=context,
+            history=history_objs,
+        )
+        full_prompt = formatted_prompt.to_string()
         try:
-            prompt = ""
-            for file in files_content:
-                prompt += f"File Name: {file['file_name']}\n"
-                prompt += f"Content: {file['content']}\n\n"
-            # Add the system instruction to the prompt
-            prompt += request.user_text
-            # --- Start Chat Session ---
-            chat_session = client.chats.create(
+            # --- Send Message to Gemini ---
+            response = gemini_client.models.generate_content(
                 model=MODEL_NAME,
-                history=history_objs,
+                contents=full_prompt,
                 config=generation_config,
             )
-            # --- Send Message to Gemini ---
-            response = chat_session.send_message(prompt)
             # --- Process Response ---
-            reply_text = response.text
+            reply_text = response.candidates[0].content.parts[0].text
             await insert_message(
                 notebook_id=request.notebookID,
                 responder="user",
@@ -520,7 +499,20 @@ async def generate_faq_route(notebookID: str = Form(...)):
     Generates Frequently Asked Questions based on the notebook's source documents.
     """
     print(f"Generating FAQ for notebook: {notebookID}")
-    source_content = await get_combined_source_content(notebookID)
+    vectorDB = Chroma(
+        collection_name=notebookID,
+        embedding_function=embeddings,
+        persist_directory="./chroma_db",
+        client_settings=Settings(
+            anonymized_telemetry=False,
+            is_persistent=True,
+        ),
+    )
+    source_content = await query_file(
+        vectorDB,
+        "Generate a list of 3-5 frequently asked questions (FAQs) and their answers.",
+        num_docs=100,
+    )
     if not source_content:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -548,7 +540,20 @@ async def generate_study_guide_route(notebookID: str = Form(...)):
     Generates a study guide (key topics, potential questions) based on the notebook's source documents.
     """
     print(f"Generating Study Guide for notebook: {notebookID}")
-    source_content = await get_combined_source_content(notebookID)
+    vectorDB = Chroma(
+        collection_name=notebookID,
+        embedding_function=embeddings,
+        persist_directory="./chroma_db",
+        client_settings=Settings(
+            anonymized_telemetry=False,
+            is_persistent=True,
+        ),
+    )
+    source_content = await query_file(
+        vectorDB,
+        "Generate a study guide with key topics and potential questions.",
+        num_docs=100,
+    )
     if not source_content:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -582,7 +587,20 @@ async def generate_briefing_route(notebookID: str = Form(...)):
     Generates a briefing (summary) based on the notebook's source documents.
     """
     print(f"Generating Briefing for notebook: {notebookID}")
-    source_content = await get_combined_source_content(notebookID)
+    vectorDB = Chroma(
+        collection_name=notebookID,
+        embedding_function=embeddings,
+        persist_directory="./chroma_db",
+        client_settings=Settings(
+            anonymized_telemetry=False,
+            is_persistent=True,
+        ),
+    )
+    source_content = await query_file(
+        vectorDB,
+        "Generate a concise briefing summarizing the key points and findings.",
+        num_docs=100,
+    )
     if not source_content:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
