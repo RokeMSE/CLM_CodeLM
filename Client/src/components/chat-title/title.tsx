@@ -81,7 +81,7 @@ export default function ChatTitle({ logo, onTitleChange }: ChatTitleProps) {
   }, []);
 
   return (
-    <div className="flex flex-col w-full bg-zinc-950 text-white">
+    <div className="flex flex-col w-full bg-zinc-800 text-white">
       <div className="flex items-center w-full p-2">
         {logo && (
           <div className="flex-shrink-0 w-12 h-12 mx-2 border rounded-full overflow-hidden cursor-pointer">
@@ -127,7 +127,7 @@ export default function ChatTitle({ logo, onTitleChange }: ChatTitleProps) {
           )}
         </div>
       </div>
-      <div className="w-4/5 h-px bg-zinc-700/60 mx-auto"></div>
+      <div className="w-4/5 h-1 bg-zinc-400/80 mx-auto rounded-4xl"></div>
     </div>
   );
 }
