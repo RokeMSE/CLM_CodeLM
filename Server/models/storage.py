@@ -52,6 +52,16 @@ embeddings = GoogleGenerativeAIEmbeddings(
 )
 
 
+def get_chroma_settings():
+    """Returns consistent ChromaDB settings to use throughout the application"""
+    return Settings(
+        persist_directory="./chroma_db",
+        is_persistent=True,
+        anonymized_telemetry=False,
+        allow_reset=True,  # Ensure this is included to allow writing
+    )
+
+
 async def upload(file: bytes, file_name: str, bucket_name: str, notebook_id: str):
     """Upload a file to Supabase storage and add to vector database."""
     try:
@@ -95,18 +105,12 @@ async def upload(file: bytes, file_name: str, bucket_name: str, notebook_id: str
                     chunk.metadata["source"] = file_name
 
                 # Store in vector database
-                vectorDB = Chroma.from_documents(
+                Chroma.from_documents(
                     chunks,
                     embeddings,
                     collection_name=notebook_id,
-                    persist_directory="./chroma_db",
-                    client_settings=Settings(
-                        persist_directory="./chroma_db",
-                        is_persistent=True,
-                        anonymized_telemetry=False,  # Add this to prevent telemetry issues
-                    ),
+                    client_settings=get_chroma_settings(),
                 )
-                vectorDB.persist()
                 print(f"Added {len(chunks)} chunks to vector database for {file_name}")
 
             except Exception as processing_error:
@@ -152,11 +156,7 @@ async def delete_file(file_path: str, bucket_name: str):
                     collection_name=notebook_id,
                     embedding_function=embeddings,
                     persist_directory="./chroma_db",
-                    client_settings=Settings(
-                        persist_directory="./chroma_db",
-                        is_persistent=True,
-                        anonymized_telemetry=False,  # Add this to prevent telemetry issues
-                    ),
+                    client_settings=get_chroma_settings(),
                 )
 
                 # Get the file name from the path
@@ -174,9 +174,6 @@ async def delete_file(file_path: str, bucket_name: str):
                     )
                 else:
                     print(f"No chunks found for {file_name} in vector database.")
-
-                # Persist the changes
-                chroma_client.persist()
 
             except Exception as ve:
                 print(f"Error removing vectors for {file_path}: {ve}")

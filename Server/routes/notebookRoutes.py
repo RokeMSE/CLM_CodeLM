@@ -1,7 +1,6 @@
 import os
 import uuid
 from typing import List, Optional
-import google.genai as genai
 from dotenv import load_dotenv
 from fastapi import (
     APIRouter,
@@ -13,11 +12,10 @@ from fastapi import (
     UploadFile,
     status,
 )
-from google.genai.types import GenerateContentConfig, ModelContent, Part, UserContent
+import ollama
 from pydantic import BaseModel, Field  # For request/response validation
-from langchain_google_genai.embeddings import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_huggingface import HuggingFaceEmbeddings
 from models.notebookModel import (
     create_notebook,
     delete_all_file_metadata,
@@ -32,29 +30,94 @@ from models.notebookModel import (
     insert_message,
     update_notebook_metadata,
 )
-from models.storage import delete_file, query_file, upload
+from models.storage import delete_file, query_file, upload, get_chroma_settings
 import datetime
-from chromadb.config import Settings
+from tqdm import tqdm
 
 load_dotenv()
 # --- Load Environment Variables ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL_NAME = "gemini-2.0-flash"
-SYSTEM_INSTRUCTION = os.getenv("SYSTEM_INSTRUCTION")
-embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/embedding-001",
-    google_api_key=GEMINI_API_KEY,
-)
+LOCAL_MODEL = os.getenv(
+    "LOCAL_MODEL", "gemma3:4b"
+)  # Default to gemma3:4b if not specified
+SYSTEM_INSTRUCTION = os.getenv("SYSTEM_INSTRUCTION", "You are a helpful AI assistant.")
+LOCAL_MODEL_PATH = os.getenv(
+    "LOCAL_MODEL_PATH", "/path/to/local/model"
+)  # Update with your model path
+# Initialize Ollama
+print("Initializing Ollama...")
+os.environ["OLLAMA_MODELS"] = LOCAL_MODEL_PATH
+try:
+    print(f"Checking for Ollama model: {LOCAL_MODEL}")
+    available_models = ollama.list()
+
+    # Extract model names from the response - UPDATED ACCESS METHOD
+    model_names = []
+    if "models" in available_models:
+        model_names = [model.model for model in available_models["models"]]
+        print(f"Available models: {model_names}")
+
+    if LOCAL_MODEL not in model_names:
+        print(f"Model {LOCAL_MODEL} not found in available models. Pulling it now...")
+
+        # Setup variables for tqdm progress tracking
+        completed = 0
+        total = 100  # Default until we know the actual total
+        progress_bar = None
+
+        # Use streaming to show progress with tqdm
+        for progress in ollama.pull(LOCAL_MODEL, stream=True):
+            if "status" in progress:
+                status = progress["status"]
+
+                # Show different types of progress info
+                if "completed" in progress and "total" in progress:
+                    if progress_bar is None or total != progress["total"]:
+                        # First time or total size changed, create/reset progress bar
+                        total = progress["total"]
+                        if progress_bar is not None:
+                            progress_bar.close()
+                        progress_bar = tqdm(
+                            total=total,
+                            unit="B",
+                            unit_scale=True,
+                            desc=f"Pulling {LOCAL_MODEL}",
+                        )
+
+                    # Update progress
+                    new_completed = progress["completed"]
+                    progress_bar.update(new_completed - completed)
+                    completed = new_completed
+
+                elif progress_bar is None and "digest" in progress:
+                    # For operations without direct progress reporting
+                    print(f"Status: {status} - Digest: {progress['digest']}")
+
+                elif progress_bar is None:
+                    # For status messages without progress info
+                    print(f"Status: {status}")
+
+        # Close the progress bar
+        if progress_bar is not None:
+            progress_bar.close()
+
+        print(f"✅ Model {LOCAL_MODEL} successfully pulled!")
+    else:
+        print(f"✅ Model {LOCAL_MODEL} already exists locally")
+
+except Exception as e:
+    print(f"Error checking/pulling models: {e}")
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Error initializing Ollama model.",
+    )
+
+# Replace Google embeddings with HuggingFace embeddings
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+
 os.makedirs("./chroma_db", exist_ok=True)
-gemini_client = genai.Client(
-    api_key=GEMINI_API_KEY,
-)
-# ----------- SETTING UP THE API CALLS -----------------
+
 # --- Configure Logging ---
 router = APIRouter()
-
-if not GEMINI_API_KEY:
-    raise ValueError("API Key not configured")
 
 
 # --- Pydantic Models for Data Validation ---
@@ -82,54 +145,86 @@ class GenerationResponse(BaseModel):
 
 async def generate_single_turn(prompt: str) -> str:
     """
-    Sends a single prompt to the Gemini API and returns the text response.
+    Sends a single prompt to Ollama and returns the text response.
     """
-    if not GEMINI_API_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="API Key not configured on server.",
-        )
+    return await generate_with_ollama(prompt=prompt, temperature=0.7)
 
+
+async def generate_with_ollama(
+    prompt: str,
+    system_prompt: str = None,
+    temperature: float = 0.7,
+    top_p: float = 0.9,
+    top_k: int = 40,
+    num_predict: int = 2048,
+    stop_sequences: List[str] = None,
+    repeat_penalty: float = 1.1,
+    presence_penalty: float = 0.0,
+    frequency_penalty: float = 0.0,
+    seed: int = None,
+) -> str:
+    """
+    Sends a prompt to Ollama and returns the text response.
+    """
     try:
-        generation_config = GenerateContentConfig(
-            temperature=0.7,
-            max_output_tokens=2048,
-            top_p=0.9,
-            top_k=40,
-        )
         print(
-            f"Sending generation prompt (length: {len(prompt)} chars) to model: {MODEL_NAME}"
-        )
-        response = gemini_client.models.generate_content(
-            model=MODEL_NAME, contents=prompt, config=generation_config
+            f"Sending prompt (length: {len(prompt)} chars) to Ollama model: {LOCAL_MODEL}"
         )
 
-        if (
-            response.candidates
-            and response.candidates[0].content
-            and response.candidates[0].content.parts
-        ):
-            reply_text = response.candidates[0].content.parts[0].text
+        # Configure parameters for Ollama - UPDATED STRUCTURE
+        params = {
+            "model": LOCAL_MODEL,
+            "prompt": prompt,
+            "options": {
+                "temperature": temperature,
+                "top_p": top_p,
+                "top_k": top_k,
+                "num_predict": num_predict,
+                "repeat_penalty": repeat_penalty,
+            },
+            "stream": False,
+        }
+
+        # Only add optional parameters if they're provided
+        if system_prompt:
+            params["system"] = system_prompt
+
+        if stop_sequences:
+            if "options" not in params:
+                params["options"] = {}
+            params["options"]["stop"] = stop_sequences
+
+        if presence_penalty != 0.0:
+            if "options" not in params:
+                params["options"] = {}
+            params["options"]["presence_penalty"] = presence_penalty
+
+        if frequency_penalty != 0.0:
+            if "options" not in params:
+                params["options"] = {}
+            params["options"]["frequency_penalty"] = frequency_penalty
+
+        if seed is not None:
+            if "options" not in params:
+                params["options"] = {}
+            params["options"]["seed"] = seed
+
+        # Generate response from Ollama
+        response = ollama.generate(**params)
+
+        if response and "response" in response:
+            reply_text = response["response"]
             print("Generation successful.")
             return reply_text
-        elif response.prompt_feedback.block_reason:
-            block_reason_str = response.prompt_feedback.block_reason.name
-            print(f"Generation blocked. Reason: {block_reason_str}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Content generation blocked by safety filters: {block_reason_str}",
-            )
         else:
-            # Handle cases where response is empty but not blocked (rare)
-            print("Generation resulted in empty response without explicit blocking.")
+            print("Generation resulted in empty response.")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="AI model returned an empty response.",
             )
 
     except Exception as e:
-        print(f"Error during Gemini API call: {e}")
-        # Catch other potential errors during API call setup or sending
+        print(f"Error during Ollama API call: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while contacting the AI service: {str(e)}",
@@ -188,24 +283,16 @@ async def upload_file_route(
 @router.post("/chat", response_model=ChatResponse)
 async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
     """
-    Receives user text and chat history, calls the Gemini API,
+    Receives user text and chat history, calls Ollama,
     and returns the model's reply.
     """
-    if not GEMINI_API_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="API Key not configured on server.",
-        )
     context = ""
     try:
+        # Context retrieval stays mostly the same
         vectorDB = Chroma(
             collection_name=request.notebookID,
             embedding_function=embeddings,
-            persist_directory="./chroma_db",
-            client_settings=Settings(
-                anonymized_telemetry=False,
-                is_persistent=True,
-            ),
+            client_settings=get_chroma_settings(),
         )
 
         context = await query_file(
@@ -220,104 +307,49 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             context = "\n".join([doc.page_content for doc in context])
             print(f"Context retrieved: {context[:100]}...")
 
-        # # --- Prepare History for Gemini SDK ---
-        # # The Python SDK expects history like: [{'role': 'user'/'model', 'parts': [{'text': '...'}]}]
-        history_objs = []
+        # Format history for Ollama (simpler format than Gemini)
+        chat_history = ""
         for msg in request.history:
-            # Basic validation for role
             if msg.role == "user":
-                history_objs.append(UserContent(parts=[Part(text=msg.text)]))
+                chat_history += f"User: {msg.text}\n"
             elif msg.role == "model":
-                history_objs.append(ModelContent(parts=[Part(text=msg.text)]))
+                chat_history += f"Assistant: {msg.text}\n"
 
-        # --- Configuration ---
-        # Keeping it wholesome and Christian
-        safety_settings = [
-            {
-                "category": "HARM_CATEGORY_HARASSMENT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-            },
-            {
-                "category": "HARM_CATEGORY_HATE_SPEECH",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-            },
-            {
-                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-            },
-            {
-                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-            },
-        ]
-        # Basic model config
-        generation_config = GenerateContentConfig(
-            temperature=0.9,  # 90% randomness, keeping it fresh.
-            max_output_tokens=1000,  # 1000 tokens = 750 words (I think)
-            top_p=0.9,  # consider the top 90% of the probability distribution when generating text.
-            top_k=40,  # consider the top 40 tokens with the highest probabilities when generating text.
-            safety_settings=safety_settings,
-            system_instruction=SYSTEM_INSTRUCTION,
+        # Build prompt with context and history
+        system_prompt = (
+            SYSTEM_INSTRUCTION
+            + "\nUse the following context to help answer the user's question:\n"
+            + context
         )
-        prompt = ChatPromptTemplate(
-            [
-                (
-                    "system",
-                    "Use the following context to help answer the user's question: {context}",
-                ),
-                ("user", "{user_input}"),
-            ]
-        )
-        formatted_prompt = prompt.format_prompt(
-            user_input=request.user_text,
-            context=context,
-            history=history_objs,
-        )
-        full_prompt = formatted_prompt.to_string()
-        try:
-            # --- Send Message to Gemini ---
-            response = gemini_client.models.generate_content(
-                model=MODEL_NAME,
-                contents=full_prompt,
-                config=generation_config,
-            )
-            # --- Process Response ---
-            reply_text = response.candidates[0].content.parts[0].text
-            await insert_message(
-                notebook_id=request.notebookID,
-                responder="user",
-                message=request.user_text,
-                user_id=user_id,
-            )
-            await insert_message(
-                notebook_id=request.notebookID,
-                responder=MODEL_NAME,
-                message=reply_text,
-            )
-            return ChatResponse(reply=reply_text)
 
-        except ValueError:
-            # This usually indicates the response was blocked by safety settings
-            # Optionally inspect response.prompt_feedback here
-            feedback = response.prompt_feedback
-            block_reason = "Content may be blocked by safety settings."
-            if feedback.block_reason:
-                block_reason += (
-                    f" Reason: {feedback.block_reason.name}"  # Use .name for enum
-                )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=block_reason
-            )
-        except Exception as e:
-            # Catch other potential errors during response processing
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error processing the bot's response.{str(e)}",
-            )
+        full_prompt = f"{chat_history}User: {request.user_text}\nAssistant:"
+
+        # Generate response with Ollama
+        reply_text = await generate_with_ollama(
+            prompt=full_prompt,
+            system_prompt=system_prompt,
+            temperature=1.0,
+            top_p=0.95,
+            top_k=40,
+            num_predict=512,
+        )
+
+        # Save conversation to database
+        await insert_message(
+            notebook_id=request.notebookID,
+            responder="user",
+            message=request.user_text,
+            user_id=user_id,
+        )
+        await insert_message(
+            notebook_id=request.notebookID,
+            responder=LOCAL_MODEL,
+            message=reply_text,
+        )
+
+        return ChatResponse(reply=reply_text)
 
     except Exception as e:
-        # Catch potential errors during API call setup or sending
-        # You might want more specific error handling based on Gemini SDK exceptions
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while contacting the AI service: {str(e)}",
@@ -502,11 +534,7 @@ async def generate_faq_route(notebookID: str = Form(...)):
     vectorDB = Chroma(
         collection_name=notebookID,
         embedding_function=embeddings,
-        persist_directory="./chroma_db",
-        client_settings=Settings(
-            anonymized_telemetry=False,
-            is_persistent=True,
-        ),
+        client_settings=get_chroma_settings(),
     )
     source_content = await query_file(
         vectorDB,
@@ -543,11 +571,7 @@ async def generate_study_guide_route(notebookID: str = Form(...)):
     vectorDB = Chroma(
         collection_name=notebookID,
         embedding_function=embeddings,
-        persist_directory="./chroma_db",
-        client_settings=Settings(
-            anonymized_telemetry=False,
-            is_persistent=True,
-        ),
+        client_settings=get_chroma_settings(),
     )
     source_content = await query_file(
         vectorDB,
@@ -590,11 +614,7 @@ async def generate_briefing_route(notebookID: str = Form(...)):
     vectorDB = Chroma(
         collection_name=notebookID,
         embedding_function=embeddings,
-        persist_directory="./chroma_db",
-        client_settings=Settings(
-            anonymized_telemetry=False,
-            is_persistent=True,
-        ),
+        client_settings=get_chroma_settings(),
     )
     source_content = await query_file(
         vectorDB,
