@@ -12,8 +12,10 @@ from fastapi import (
     Response,
     UploadFile,
     status,
+    BackgroundTasks,
 )
-from google.genai.types import GenerateContentConfig, ModelContent, Part, UserContent
+import logging
+from google.genai.types import GenerateContentConfig
 from pydantic import BaseModel, Field  # For request/response validation
 
 from models.notebookModel import (
@@ -32,19 +34,29 @@ from models.notebookModel import (
 )
 from models.storage import delete_file, read_file, upload
 import datetime
+from rag_processing import (
+    process_document_for_rag,
+    delete_document_from_rag,
+    get_qdrant_collection_name,
+)
+from langchain_core.documents import Document
+from langchain_qdrant import Qdrant
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.output_parsers import StrOutputParser
+
+from rag_config import llm, qdrant_client, embeddings_model
 
 load_dotenv()
 # --- Load Environment Variables ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = "gemma3:1b-it-qat"
 SYSTEM_INSTRUCTION = os.getenv("SYSTEM_INSTRUCTION")
 
 # ----------- SETTING UP THE API CALLS -----------------
 # --- Configure Logging ---
 router = APIRouter()
-
-if not GEMINI_API_KEY:
-    raise ValueError("API Key not configured")
+logger = logging.getLogger(__name__)
 
 
 # --- Pydantic Models for Data Validation ---
@@ -68,6 +80,13 @@ class ChatResponse(BaseModel):
 
 class GenerationResponse(BaseModel):
     content: str
+
+
+def format_docs(docs: List[Document]) -> str:
+    """Concatenates page_content of documents for context."""
+    if not docs:
+        return "No relevant context found."
+    return "\n\n".join(doc.page_content for doc in docs)
 
 
 async def get_combined_source_content(notebook_id: str) -> str:
@@ -181,34 +200,78 @@ async def create_notebook_route(res: Response, user_id: str = Cookie(None)):
 
 @router.post("/upload")
 async def upload_file_route(
-    res: Response, notebookID: str = Form(...), files: List[UploadFile] = File(...)
+    res: Response,
+    background_tasks: BackgroundTasks,
+    notebookID: str = Form(...),
+    files: List[UploadFile] = File(...),
 ):
     """
     Upload a file to the notebook.
     """
-    print("Uploading files to the notebook")
+    logger.info(f"Uploading {len(files)} file(s) to notebook: {notebookID}")
+    uploaded_file_details = []
+
     for file in files:
-        file_content = await file.read()
-        file_extension = file.filename.split(".")[-1]
-        unique_filename = str(uuid.uuid4()) + "." + file_extension
-        # Call the upload function from storage.py
-        response = await upload(file_content, unique_filename, "files", notebookID)
-        if response is None:
-            raise HTTPException(status_code=500, detail="Error uploading file")
-        else:
-            insert = await insert_file_metadata(
+        try:
+            file_content = await file.read()
+            file_extension = file.filename.split(".")[-1]
+            unique_filename = str(uuid.uuid4()) + "." + file_extension
+
+            # 1. Upload to Supabase Storage
+            public_url = await upload(
+                file_content, unique_filename, "files", notebookID
+            )
+            if public_url is None:
+                logger.error(f"Error uploading {file.filename} to Supabase.")
+                continue
+            await insert_file_metadata(
                 notebookID,
                 unique_filename,
-                file.content_type,
-                file.size,
+                file.content_type if file.content_type else "application/octet-stream",
+                len(file_content),
                 file.filename,
-                response,
+                public_url,
             )
-            if insert is None:
-                raise HTTPException(
-                    status_code=500, detail="Error inserting file metadata"
-                )
-    # If all files are uploaded successfully, return a success message
+
+            # 2. Insert metadata into MongoDB
+            uploaded_file_details.append(
+                {
+                    "notebook_id": notebookID,
+                    "file_name_in_storage": unique_filename,
+                    "original_file_name": file.filename
+                    if file.filename
+                    else "untitled",
+                    "file_content_type": file.content_type
+                    if file.content_type
+                    else "application/octet-stream",
+                }
+            )
+        except Exception as e:
+            logger.error(
+                f"Error processing file {file.filename} for upload: {e}", exc_info=True
+            )
+
+    if not uploaded_file_details:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No files were successfully uploaded or processed for Supabase/MongoDB.",
+        )
+
+    # 3. Trigger RAG processing for successfully uploaded files in the background
+    for details in uploaded_file_details:
+        background_tasks.add_task(
+            process_document_for_rag,
+            notebook_id=details["notebook_id"],
+            file_name_in_storage=details["file_name_in_storage"],
+            original_file_name=details["original_file_name"],
+            file_type=details["file_content_type"],
+        )
+        logger.info(f"Scheduled RAG processing for {details['original_file_name']}")
+
+    source_update_count = len(files)
+    if source_update_count > 0:
+        await update_notebook_metadata(notebookID, source=source_update_count)
+
     res.status_code = status.HTTP_200_OK
     return {"detail": "Files uploaded successfully"}
 
@@ -217,131 +280,96 @@ async def upload_file_route(
 @router.post("/chat", response_model=ChatResponse)
 async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
     """
-    Receives user text and chat history, calls the Gemini API,
+    Receives user text and chat history, calls the RAG chain with Ollama LLM,
     and returns the model's reply.
     """
-    if not GEMINI_API_KEY:
+    if not llm or not qdrant_client or not embeddings_model:
+        logger.error(
+            "LLM, Qdrant client, or Embeddings model not initialized. Cannot process chat request."
+        )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="API Key not configured on server.",
+            detail="A core AI service is not available. Please try again later.",
         )
+
+    notebook_id = request.notebookID
+    user_query = request.user_text
 
     try:
-        client = genai.Client(
-            api_key=GEMINI_API_KEY,
-            # Optional: Set the region if needed
-            # region="us-central1",
-        )
-
-        files = await get_files(request.notebookID)
-        files_content = []
-        print(request.excluded_files)
-        for file in files:
-            if file["file_name"] in request.excluded_files:
-                continue
-
-            print(f"Reading file: {file['file_name']}")
-            file_content = await read_file(
-                f"{request.notebookID}/{file['file_name']}", "files", file["file_type"]
-            )
-            if file_content is not None:
-                files_content.append(
-                    {"file_name": file["file_original_name"], "content": file_content}
-                )
-        # --- Prepare History for Gemini SDK ---
-        # The Python SDK expects history like: [{'role': 'user'/'model', 'parts': [{'text': '...'}]}]
-        history_objs = []
-        for msg in request.history:
-            # Basic validation for role
-            if msg.role == "user":
-                history_objs.append(UserContent(parts=[Part(text=msg.text)]))
-            elif msg.role == "model":
-                history_objs.append(ModelContent(parts=[Part(text=msg.text)]))
-
-        # --- Configuration ---
-        # Keeping it wholesome and Christian
-        safety_settings = [
-            {
-                "category": "HARM_CATEGORY_HARASSMENT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-            },
-            {
-                "category": "HARM_CATEGORY_HATE_SPEECH",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-            },
-            {
-                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-            },
-            {
-                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                "threshold": "BLOCK_MEDIUM_AND_ABOVE",
-            },
-        ]
-        # Basic model config
-        generation_config = GenerateContentConfig(
-            temperature=0.9,  # 90% randomness, keeping it fresh.
-            max_output_tokens=1000,  # 1000 tokens = 750 words (I think)
-            top_p=0.9,  # consider the top 90% of the probability distribution when generating text.
-            top_k=40,  # consider the top 40 tokens with the highest probabilities when generating text.
-            safety_settings=safety_settings,
-            # system_instruction=SYSTEM_INSTRUCTION,
-        )
+        collection_name = get_qdrant_collection_name(notebook_id)
         try:
-            prompt = ""
-            for file in files_content:
-                prompt += f"File Name: {file['file_name']}\n"
-                prompt += f"Content: {file['content']}\n\n"
-            # Add the system instruction to the prompt
-            prompt += request.user_text
-            # --- Start Chat Session ---
-            chat_session = client.chats.create(
-                model=MODEL_NAME,
-                history=history_objs,
-                config=generation_config,
+            qdrant_client.get_collection(collection_name=collection_name)
+            logger.info(f"Accessing Qdrant collection: {collection_name}")
+        except Exception as e:
+            logger.warning(
+                f"Qdrant collection {collection_name} not found or Qdrant error: {e}. Retrieval might yield no results."
             )
-            # --- Send Message to Gemini ---
-            response = chat_session.send_message(prompt)
-            # --- Process Response ---
-            reply_text = response.text
+
+        qdrant_vector_store = Qdrant(
+            client=qdrant_client,
+            collection_name=collection_name,
+            embeddings=embeddings_model,
+        )
+
+        retriever = qdrant_vector_store.as_retriever(search_kwargs={"k": 3})
+
+        template = """
+        Answer the following question based only on the provided context.
+        If the context does not contain the answer, say "I cannot answer this question based on the provided documents."
+        Do not make up information.
+
+        Context:
+        {context}
+
+        Question: {question}
+        """
+        prompt = ChatPromptTemplate.from_template(template)
+
+        rag_chain = (
+            {
+                "context": retriever | RunnableLambda(format_docs),
+                "question": RunnablePassthrough(),
+            }
+            | prompt
+            | llm
+            | StrOutputParser()
+        )
+
+        llm_response_text = await rag_chain.ainvoke(user_query)
+
+        if user_id:
             await insert_message(
-                notebook_id=request.notebookID,
+                notebook_id=notebook_id,
                 responder="user",
-                message=request.user_text,
+                message=user_query,
                 user_id=user_id,
             )
             await insert_message(
-                notebook_id=request.notebookID,
+                notebook_id=notebook_id,
                 responder=MODEL_NAME,
-                message=reply_text,
+                message=llm_response_text,
+                user_id=None,  #
             )
-            return ChatResponse(reply=reply_text)
-
-        except ValueError:
-            # This usually indicates the response was blocked by safety settings
-            # Optionally inspect response.prompt_feedback here
-            feedback = response.prompt_feedback
-            block_reason = "Content may be blocked by safety settings."
-            if feedback.block_reason:
-                block_reason += (
-                    f" Reason: {feedback.block_reason.name}"  # Use .name for enum
-                )
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=block_reason
-            )
-        except Exception as e:
-            # Catch other potential errors during response processing
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error processing the bot's response.{str(e)}",
+            logger.info("User query and LLM response stored in conversation history.")
+        else:
+            logger.warning(
+                "No user_id found (user might not be logged in). Skipping message storage."
             )
 
+        return ChatResponse(reply=llm_response_text)
+
+    except HTTPException as http_exc:
+        logger.error(
+            f"HTTPException during chat processing: {http_exc.detail}", exc_info=True
+        )
+        raise http_exc  # Re-raise FastAPI's HTTPException
     except Exception as e:
-        # Catch potential errors during API call setup or sending
-        # You might want more specific error handling based on Gemini SDK exceptions
+        logger.error(
+            f"An unexpected error occurred during chat processing: {e}", exc_info=True
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An error occurred while contacting the AI service: {str(e)}",
+            detail=f"An error occurred while processing your request: {str(e)}",
         )
 
 
@@ -383,22 +411,69 @@ async def get_files_route(res: Response, notebookID: str = Form(...)):
 
 @router.post("/delete-files")
 async def delete_file_route(
-    res: Response, files: List[str] = Form(...), notebookID: str = Form(...)
+    res: Response,
+    background_tasks: BackgroundTasks,
+    files: List[str] = Form(...),
+    notebookID: str = Form(...),
 ):
     """
     Delete a file from the notebook.
     """
-    print("Deleting the file")
-    print(f"Files to delete: {files}")
-    for file_name in files:
-        print(f"Deleting file: {file_name}")
-        print(f"Deleting file from {notebookID}/{file_name}")
-        response = await delete_file(f"{notebookID}/{file_name}", "files")
-        if response is None:
-            raise HTTPException(status_code=500, detail="Error deleting file")
-        response = await delete_file_metadata(file_name, notebookID)
-        if response is None:
-            raise HTTPException(status_code=500, detail="Error deleting file metadata")
+    logger.info(f"Deleting {len(files)} file(s) from notebook: {notebookID}")
+    deleted_count_db = 0
+    source_reduction_count = 0
+
+    all_files_metadata = await get_files(
+        notebookID
+    )  # Fetch all file metadata for this notebook
+    file_metadata_map = {fmeta["file_name"]: fmeta for fmeta in all_files_metadata}
+
+    for file_name_in_storage_to_delete in files:
+        try:
+            # 1. Delete from Supabase Storage
+            supabase_file_path = f"{notebookID}/{file_name_in_storage_to_delete}"
+            await delete_file(supabase_file_path, "files")
+
+            # Get original file name for RAG deletion and logging
+            original_file_name = "unknown_file"
+            if file_name_in_storage_to_delete in file_metadata_map:
+                original_file_name = file_metadata_map[
+                    file_name_in_storage_to_delete
+                ].get("file_original_name", "unknown_file")
+
+            # 2. Delete from MongoDB
+            await delete_file_metadata(file_name_in_storage_to_delete, notebookID)
+            deleted_count_db += 1
+            source_reduction_count += 1
+
+            # 3. Trigger RAG data deletion in the background
+            background_tasks.add_task(
+                delete_document_from_rag,
+                notebook_id=notebookID,
+                original_file_name=original_file_name,  # Pass the original name for metadata matching in Qdrant
+            )
+            logger.info(
+                f"Scheduled RAG data deletion for original file: {original_file_name}"
+            )
+        except HTTPException as http_exc:
+            logger.warning(
+                f"Skipping deletion of {file_name_in_storage_to_delete} due to model error: {http_exc.detail}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Error deleting file {file_name_in_storage_to_delete}: {e}",
+                exc_info=True,
+            )
+
+    if source_reduction_count > 0:
+        await update_notebook_metadata(notebookID, source=-source_reduction_count)
+
+    if deleted_count_db == 0 and len(files) > 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No matching files found to delete from database.",
+        )
+
     res.status_code = status.HTTP_200_OK
     return {"detail": "File deleted"}
 

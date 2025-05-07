@@ -31,6 +31,12 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+# messages = [
+#     ("system", "You are a helpful personal assistant. Answer as friendly as possible."),
+#     ("human", "I love programming."),
+# ]
+# print(llm.invoke(messages))
+
 
 # --- Add a root endpoint for basic testing ---
 @app.get("/")
