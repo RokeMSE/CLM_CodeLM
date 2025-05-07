@@ -32,84 +32,61 @@ from models.notebookModel import (
 )
 from models.storage import delete_file, query_file, upload, get_chroma_settings
 import datetime
-from tqdm import tqdm
+import subprocess
 
+# Load environment variables
 load_dotenv()
-# --- Load Environment Variables ---
-LOCAL_MODEL = os.getenv(
-    "LOCAL_MODEL", "gemma3:4b"
-)  # Default to gemma3:4b if not specified
-SYSTEM_INSTRUCTION = os.getenv("SYSTEM_INSTRUCTION", "You are a helpful AI assistant.")
-LOCAL_MODEL_PATH = os.getenv(
-    "LOCAL_MODEL_PATH", "/path/to/local/model"
-)  # Update with your model path
-# Initialize Ollama
-print("Initializing Ollama...")
-os.environ["OLLAMA_MODELS"] = LOCAL_MODEL_PATH
+
+# --- Custom Model Configuration ---
+CUSTOM_MODEL_NAME = "my-custom-model"  # Name to identify your model
+LOCAL_MODEL = os.getenv("LOCAL_MODEL", "llama3")  # Use llama3 as fallback
+SYSTEM_INSTRUCTION = os.getenv("SYSTEM_INSTRUCTION", "You are a helpful assistant.")
+print(f"Initializing with model: {LOCAL_MODEL}")
+
+# Create a Modelfile in memory - using a known base model
+modelfile_content = """
+FROM llama3
+PARAMETER temperature 0.9
+PARAMETER top_p 0.95
+PARAMETER num_predict 512
+PARAMETER top_k 40
+"""
+
 try:
-    print(f"Checking for Ollama model: {LOCAL_MODEL}")
-    available_models = ollama.list()
+    # Check if model already exists
+    models = ollama.list()
+    model_exists = any(
+        model.get("name") == CUSTOM_MODEL_NAME for model in models.get("models", [])
+    )
 
-    # Extract model names from the response - UPDATED ACCESS METHOD
-    model_names = []
-    if "models" in available_models:
-        model_names = [model.model for model in available_models["models"]]
-        print(f"Available models: {model_names}")
+    if not model_exists:
+        print(f"Creating custom model '{CUSTOM_MODEL_NAME}'")
 
-    if LOCAL_MODEL not in model_names:
-        print(f"Model {LOCAL_MODEL} not found in available models. Pulling it now...")
+        # Create physical Modelfile
+        modelfile_path = os.path.join(os.getcwd(), "Modelfile")
+        with open(modelfile_path, "w") as f:
+            f.write(modelfile_content)
 
-        # Setup variables for tqdm progress tracking
-        completed = 0
-        total = 100  # Default until we know the actual total
-        progress_bar = None
+        result = subprocess.run(
+            ["ollama", "create", CUSTOM_MODEL_NAME, "-f", modelfile_path],
+            capture_output=True,
+            text=True,
+        )
 
-        # Use streaming to show progress with tqdm
-        for progress in ollama.pull(LOCAL_MODEL, stream=True):
-            if "status" in progress:
-                status = progress["status"]
-
-                # Show different types of progress info
-                if "completed" in progress and "total" in progress:
-                    if progress_bar is None or total != progress["total"]:
-                        # First time or total size changed, create/reset progress bar
-                        total = progress["total"]
-                        if progress_bar is not None:
-                            progress_bar.close()
-                        progress_bar = tqdm(
-                            total=total,
-                            unit="B",
-                            unit_scale=True,
-                            desc=f"Pulling {LOCAL_MODEL}",
-                        )
-
-                    # Update progress
-                    new_completed = progress["completed"]
-                    progress_bar.update(new_completed - completed)
-                    completed = new_completed
-
-                elif progress_bar is None and "digest" in progress:
-                    # For operations without direct progress reporting
-                    print(f"Status: {status} - Digest: {progress['digest']}")
-
-                elif progress_bar is None:
-                    # For status messages without progress info
-                    print(f"Status: {status}")
-
-        # Close the progress bar
-        if progress_bar is not None:
-            progress_bar.close()
-
-        print(f"✅ Model {LOCAL_MODEL} successfully pulled!")
+        if result.returncode == 0:
+            print(f"✅ Custom model '{CUSTOM_MODEL_NAME}' created successfully!")
+            LOCAL_MODEL = CUSTOM_MODEL_NAME
+        else:
+            print(f"Error creating model: {result.stderr}")
+            # Keep using the fallback model
     else:
-        print(f"✅ Model {LOCAL_MODEL} already exists locally")
+        print(f"✅ Custom model '{CUSTOM_MODEL_NAME}' already exists")
+        LOCAL_MODEL = CUSTOM_MODEL_NAME
 
 except Exception as e:
-    print(f"Error checking/pulling models: {e}")
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="Error initializing Ollama model.",
-    )
+    print(f"Error setting up custom model: {e}")
+    # Continue with default model
+    print("Using fallback model: llama3")
 
 # Replace Google embeddings with HuggingFace embeddings
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
@@ -320,19 +297,18 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
                 chat_history += f"Assistant: {msg.text}\n"
 
         # Create a more structured system prompt
-        system_prompt = f"""
-{SYSTEM_INSTRUCTION}
+        system_prompt = f"""You are an AI assistant that always bases answers on the provided CONTEXT ONLY.
 
-IMPORTANT: First analyze the CONTEXT below carefully. Use this information to answer the user's question accurately.
-If the information needed is not in the context, say so clearly.
-
-CONTEXT:
+<context>
 {context}
+</context>
 
-When answering:
-1. Directly address the user's question using information from the CONTEXT
-2. Include specific details and facts from the CONTEXT
-3. If you're unsure or the CONTEXT doesn't contain the answer, admit this
+RULES:
+- Read the context above carefully before answering
+- Only use information found in the context
+- If information is not in the context, say "I don't have that information"
+- Never make up facts or details not present in the context
+- Answer with specific details and direct quotes from the context when possible
 """
         # Create the user prompt separately
         full_prompt = f"{chat_history}User: {request.user_text}\nAssistant:"
