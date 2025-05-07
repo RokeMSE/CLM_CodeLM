@@ -38,6 +38,7 @@ from rag_processing import (
     process_document_for_rag,
     delete_document_from_rag,
     get_qdrant_collection_name,
+    create_qdrant_collection_for_notebook,
 )
 from langchain_core.documents import Document
 from langchain_qdrant import Qdrant
@@ -185,7 +186,9 @@ async def generate_single_turn(prompt: str) -> str:
 
 
 @router.post("/create-notebook")
-async def create_notebook_route(res: Response, user_id: str = Cookie(None)):
+async def create_notebook_route(
+    res: Response, background_tasks: BackgroundTasks, user_id: str = Cookie(None)
+):
     """
     Create a new notebook.
     """
@@ -194,6 +197,10 @@ async def create_notebook_route(res: Response, user_id: str = Cookie(None)):
     response = await create_notebook(notebook_id, user_id)
     if response is None:
         raise HTTPException(status_code=500, detail="Error creating notebook")
+
+    background_tasks.add_task(create_qdrant_collection_for_notebook, notebook_id)
+    logger.info(f"Scheduled Qdrant collection creation for notebook ID: {notebook_id}")
+
     res.status_code = status.HTTP_201_CREATED
     return {"notebook_id": notebook_id}  # this is the response body
 

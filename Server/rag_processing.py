@@ -7,6 +7,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_qdrant import QdrantVectorStore
 
+from qdrant_client.http.models import CollectionStatus, VectorParams, Distance
+
+EMBEDDING_DIMENSION = 768
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -14,6 +18,46 @@ logger = logging.getLogger(__name__)
 def get_qdrant_collection_name(notebook_id: str) -> str:
     """Generates a Qdrant-compatible collection name from a notebook ID."""
     return f"notebook_{notebook_id.replace('-', '_')}"
+
+
+async def create_qdrant_collection_for_notebook(notebook_id: str):
+    if not qdrant_client:
+        logger.error("Qdrant client not initialized. Cannot create collection.")
+        return False
+
+    collection_name = get_qdrant_collection_name(notebook_id)
+    logger.info(f"Attempting to create Qdrant collection: {collection_name}")
+
+    try:
+        try:
+            collection_info = qdrant_client.get_collection(collection_name)
+            if collection_info.status == CollectionStatus.GREEN:
+                logger.info(
+                    f"Qdrant collection '{collection_name}' already exists and is ready."
+                )
+                return True
+        except Exception as e:  # Catches errors if collection doesn't exist
+            logger.info(
+                f"Collection '{collection_name}' does not exist or error fetching it: {e}. Proceeding with creation."
+            )
+
+        qdrant_client.create_collection(
+            collection_name=collection_name,
+            vectors_config=VectorParams(
+                size=EMBEDDING_DIMENSION, distance=Distance.COSINE
+            ),
+            # You can add other configurations here, e.g., on_disk=True, HNSW config, etc.
+        )
+        logger.info(
+            f"Successfully created Qdrant collection: {collection_name} with vector size {EMBEDDING_DIMENSION}"
+        )
+        return True
+    except Exception as e:
+        logger.error(
+            f"Failed to create Qdrant collection '{collection_name}': {e}",
+            exc_info=True,
+        )
+        return False
 
 
 async def process_document_for_rag(
