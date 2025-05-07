@@ -38,55 +38,46 @@ import subprocess
 load_dotenv()
 
 # --- Custom Model Configuration ---
-CUSTOM_MODEL_NAME = "my-custom-model"  # Name to identify your model
-LOCAL_MODEL = os.getenv("LOCAL_MODEL", "llama3")  # Use llama3 as fallback
-SYSTEM_INSTRUCTION = os.getenv("SYSTEM_INSTRUCTION", "You are a helpful assistant.")
-print(f"Initializing with model: {LOCAL_MODEL}")
+# Load model settings from .env file
+LOCAL_MODEL = os.getenv("LOCAL_MODEL", "gemma3")  # Use env var with fallback
+LOCAL_MODEL_PATH = os.getenv("LOCAL_MODEL_PATH")  # Get path to custom model
 
-# Create a Modelfile in memory - using a known base model
-modelfile_content = """
-FROM llama3
-PARAMETER temperature 0.9
-PARAMETER top_p 0.95
-PARAMETER num_predict 512
-PARAMETER top_k 40
-"""
+print(f"Initializing with model: {LOCAL_MODEL} from {LOCAL_MODEL_PATH}")
 
 try:
     # Check if model already exists
     models = ollama.list()
     model_exists = any(
-        model.get("name") == CUSTOM_MODEL_NAME for model in models.get("models", [])
+        model.get("name") == LOCAL_MODEL for model in models.get("models", [])
     )
 
     if not model_exists:
-        print(f"Creating custom model '{CUSTOM_MODEL_NAME}'")
+        print(f"Creating custom model '{LOCAL_MODEL}' from {LOCAL_MODEL_PATH}")
 
-        # Create physical Modelfile
+        # Create a Modelfile pointing to the GGUF file
         modelfile_path = os.path.join(os.getcwd(), "Modelfile")
         with open(modelfile_path, "w") as f:
-            f.write(modelfile_content)
+            f.write(f"FROM {LOCAL_MODEL_PATH}")
 
+        # Create the model using the Modelfile
         result = subprocess.run(
-            ["ollama", "create", CUSTOM_MODEL_NAME, "-f", modelfile_path],
+            ["ollama", "create", LOCAL_MODEL, "-f", modelfile_path],
             capture_output=True,
             text=True,
         )
 
         if result.returncode == 0:
-            print(f"✅ Custom model '{CUSTOM_MODEL_NAME}' created successfully!")
-            LOCAL_MODEL = CUSTOM_MODEL_NAME
+            print(f"✅ Custom model '{LOCAL_MODEL}' created successfully!")
         else:
             print(f"Error creating model: {result.stderr}")
-            # Keep using the fallback model
+            LOCAL_MODEL = "llama3"  # Second fallback
     else:
-        print(f"✅ Custom model '{CUSTOM_MODEL_NAME}' already exists")
-        LOCAL_MODEL = CUSTOM_MODEL_NAME
+        print(f"✅ Model '{LOCAL_MODEL}' already exists")
 
 except Exception as e:
-    print(f"Error setting up custom model: {e}")
-    # Continue with default model
+    print(f"Error setting up model: {e}")
     print("Using fallback model: llama3")
+    LOCAL_MODEL = "llama3"
 
 # Replace Google embeddings with HuggingFace embeddings
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")

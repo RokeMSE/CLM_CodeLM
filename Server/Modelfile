@@ -1,6 +1,1 @@
-
-FROM llama3
-PARAMETER temperature 0.9
-PARAMETER top_p 0.95
-PARAMETER num_predict 512
-PARAMETER top_k 40
+FROM /home/seapeas/CLM_CodeLM/Server/custom_model/gemma-3-finetune.Q8_0.gguf
