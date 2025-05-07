@@ -304,7 +304,11 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
         if not context:
             context = "No relevant context found."
         else:
+            # Format context with clear section markers
             context = "\n".join([doc.page_content for doc in context])
+            # Truncate context if it's too long (optional)
+            if len(context) > 15000:  # Adjust this value based on your needs
+                context = context[:15000] + "..."
             print(f"Context retrieved: {context[:100]}...")
 
         # Format history for Ollama (simpler format than Gemini)
@@ -315,13 +319,22 @@ async def handle_chat(request: ChatRequest, user_id: str = Cookie(None)):
             elif msg.role == "model":
                 chat_history += f"Assistant: {msg.text}\n"
 
-        # Build prompt with context and history
-        system_prompt = (
-            SYSTEM_INSTRUCTION
-            + "\nUse the following context to help answer the user's question:\n"
-            + context
-        )
+        # Create a more structured system prompt
+        system_prompt = f"""
+{SYSTEM_INSTRUCTION}
 
+IMPORTANT: First analyze the CONTEXT below carefully. Use this information to answer the user's question accurately.
+If the information needed is not in the context, say so clearly.
+
+CONTEXT:
+{context}
+
+When answering:
+1. Directly address the user's question using information from the CONTEXT
+2. Include specific details and facts from the CONTEXT
+3. If you're unsure or the CONTEXT doesn't contain the answer, admit this
+"""
+        # Create the user prompt separately
         full_prompt = f"{chat_history}User: {request.user_text}\nAssistant:"
 
         # Generate response with Ollama
